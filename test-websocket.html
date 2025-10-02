@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .disconnect-btn {
+            background-color: #f44336;
+        }
+        .disconnect-btn:hover {
+            background-color: #da190b;
+        }
+        #messages {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        .message {
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .sent {
+            background-color: #e3f2fd;
+        }
+        .received {
+            background-color: #f1f8e9;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .status {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .disconnected {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Test Client</h1>
+
+        <div id="status" class="status disconnected">Disconnected</div>
+
+        <div class="input-group">
+            <label for="wsUrl">WebSocket URL:</label>
+            <input type="text" id="wsUrl" value="ws://localhost:8000/ws" placeholder="ws://localhost:8080/ws">
+        </div>
+
+        <div class="input-group">
+            <label for="token">Token:</label>
+            <input type="text" id="token" value="test-token" placeholder="your-token">
+        </div>
+
+        <div class="input-group">
+            <label for="userid">User ID:</label>
+            <input type="text" id="userid" value="user123" placeholder="user123">
+        </div>
+
+        <div>
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled class="disconnect-btn">Disconnect</button>
+        </div>
+
+        <div class="input-group" style="margin-top: 20px;">
+            <label for="messageInput">Message:</label>
+            <textarea id="messageInput" rows="3" placeholder="Type your message here..."></textarea>
+        </div>
+
+        <div>
+            <button id="sendBtn" onclick="sendMessage()" disabled>Send Message</button>
+            <button onclick="clearMessages()">Clear Messages</button>
+        </div>
+
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let ws = null;
+
+        function connect() {
+            const wsUrl = document.getElementById('wsUrl').value;
+            const token = document.getElementById('token').value;
+            const userid = document.getElementById('userid').value;
+
+            const fullUrl = `${wsUrl}?token=${encodeURIComponent(token)}&userid=${encodeURIComponent(userid)}`;
+
+            addMessage(`Connecting to ${fullUrl}...`, 'system');
+
+            try {
+                ws = new WebSocket(fullUrl);
+
+                ws.onopen = function(event) {
+                    addMessage('Connected successfully!', 'system');
+                    updateStatus(true);
+                };
+
+                ws.onmessage = function(event) {
+                    addMessage(`Received: ${event.data}`, 'received');
+                };
+
+                ws.onerror = function(error) {
+                    addMessage(`Error: ${error.message || 'Connection error'}`, 'error');
+                };
+
+                ws.onclose = function(event) {
+                    addMessage(`Disconnected (Code: ${event.code}, Reason: ${event.reason || 'No reason provided'})`, 'system');
+                    updateStatus(false);
+                };
+            } catch (error) {
+                addMessage(`Connection failed: ${error.message}`, 'error');
+                updateStatus(false);
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const userid = document.getElementById('userid').value;
+            const content = messageInput.value.trim();
+
+            if (!content) {
+                alert('Please enter a message');
+                return;
+            }
+
+            const message = {
+                type: "message",
+                content: content,
+                userid: userid
+            };
+
+            try {
+                ws.send(JSON.stringify(message));
+                addMessage(`Sent: ${JSON.stringify(message, null, 2)}`, 'sent');
+                messageInput.value = '';
+            } catch (error) {
+                addMessage(`Send error: ${error.message}`, 'error');
+            }
+        }
+
+        function addMessage(text, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (connected) {
+                statusDiv.textContent = 'Connected';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+            } else {
+                statusDiv.textContent = 'Disconnected';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+            }
+        }
+
+        // Allow sending message with Enter key (Ctrl+Enter for new line)
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.ctrlKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
