@@ -1,15 +1,13 @@
 import logging
 from logger import setup_logger
 from ai_consumer.config import settings
-
-setup_logger(settings)
-logger = logging.getLogger(__name__)
-
-logger.warning("AI Consumer module initialized.")
-
-def main():
-    print("Hello from ai-consumer!")
+from ai_consumer.dependencies import AIConsumer
 
 
 if __name__ == "__main__":
-    main()
+    setup_logger(settings)
+    logger = logging.getLogger(__name__)
+
+    logger.warning("AI Consumer module initialized.")
+    consumer = AIConsumer()
+    consumer.consume()
