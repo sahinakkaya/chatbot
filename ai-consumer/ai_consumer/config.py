@@ -1,24 +1,22 @@
-from typing import Sequence
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
-    allow_origins: Sequence[str] = ["*"]
-    allow_credentials: bool = False
-    allow_methods: Sequence[str] = ["*"]
-    allow_headers: Sequence[str] = ["*"]
+    openai_api_key: str = ""
 
 
+    # redis
     redis_host: str = "localhost"
     redis_port: int = 6379
 
+    # Kafka
     kafka_bootstrap_servers: str = "localhost:9092"
-    server_id: str = "server_1"
+    incoming_topic: str = "incoming_messages"
+    responses_topic: str = "responses"
+
 
     # logging
     log_level: str = "INFO"
-    app_name: str = "websocket-server"
+    app_name: str = "ai-consumer"
     log_folder: str = "/var/log"
-
 
 settings = Settings()
