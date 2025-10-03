@@ -4,6 +4,7 @@ from logging.config import dictConfig
 # List of packages to configure logging for
 packages = [
     "websocket_server",
+    "kafka",
     "uvicorn"
 ]
 
