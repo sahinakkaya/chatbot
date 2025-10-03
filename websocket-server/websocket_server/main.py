@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from fastapi import WebSocket, Query
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,12 +32,37 @@ async def websocket_endpoint(
     await conn_manager.connect(websocket, room)
     try:
         while True:
-            data = await websocket.receive_text()
+            data = await websocket.receive_json()
+
+            if data.get("type") == "message" and data.get("content"):
+                kafka_message = {
+                    "type": "message",
+                    "content": data["content"],
+                    "userid": userid,
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "server_id": settings.server_id,
+                }
+                conn_manager.publish_to_kafka("incoming_messages", kafka_message)
+            else:
+                logger.warning(f"Invalid message format from user {userid}: {data}")
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "Invalid message format",
+                        "userid": userid,
+                    }
+                )
             await conn_manager.send_personal_message(f"You wrote: {data}", websocket)
             await conn_manager.broadcast(f"User {userid} says: {data}", room)
     except WebSocketDisconnect:
         await conn_manager.disconnect(websocket, room)
         await conn_manager.broadcast(f"User {userid} left the chat", room)
+    except Exception as e:
+        logger.error(
+            f"WebSocket error",
+            extra={"userid": userid, "error": str(e), "server_id": settings.server_id},
+        )
+        await conn_manager.disconnect(websocket, userid)
 
 
 @app.get("/")

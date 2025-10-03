@@ -71,9 +71,8 @@ class ConnectionManager:
 
     def publish_to_kafka(self, topic: str, message: dict):
         """Publish message to Kafka topic"""
-        if not self.kafka_producer:
-            logger.error(f"Kafka producer not initialized {topic=}")
-            return
+        assert self.kafka_producer is not None, "Kafka producer not initialized"
+
         try:
             self.kafka_producer.send(topic, message)
             self.kafka_producer.flush()
