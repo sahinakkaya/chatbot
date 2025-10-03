@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import redis.asyncio as redis
 import redis.asyncio.client as redis_client
 from fastapi import WebSocket
@@ -39,6 +40,7 @@ class ConnectionManager:
 
     async def connect(self, websocket: WebSocket, user_id: str):
         assert self.pubsub is not None, "PubSub not initialized"
+        logger.info(f"user is is {user_id}")
         await websocket.accept()
         if user_id not in self.active_connections:
             self.active_connections[user_id] = set()
@@ -85,13 +87,41 @@ class ConnectionManager:
                 extra={"topic": topic, "error": str(e)},
             )
 
+    async def redis_listener(self):
+        """Listen for messages from Redis pub/sub"""
+        assert self.pubsub is not None, "PubSub not initialized"
+        while True:
+            try:
+                message = await self.pubsub.get_message(
+                    ignore_subscribe_messages=True, timeout=1.0
+                )
+                logger.info(f"Listening to Redis messages...")
+                logger.info(message)
+                if message and message["type"] == "message":
+                    channel = message["channel"]
+                    user_id = channel.split(":")[1] if ":" in channel else None
+
+                    if user_id:
+                        data = json.loads(message["data"])
+                        await self.broadcast(user_id, data)
+                        logger.info(
+                            f"Relayed message from Redis",
+                        )
+
+                await asyncio.sleep(0.01)  # Small delay to prevent busy waiting
+            except Exception as e:
+                logger.error(
+                    f"Redis listener error {str(e)}",
+                )
+                await asyncio.sleep(1)
+
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
-    async def broadcast(self, message: str, user_id: str):
+    async def broadcast(self, user_id: str, data: dict):
         if user_id in self.active_connections:
             for connection in self.active_connections[user_id]:
-                await connection.send_text(message)
+                await connection.send_json(data)
 
 
 conn_manager = ConnectionManager()

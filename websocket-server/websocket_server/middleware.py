@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import time
 from contextlib import asynccontextmanager
 
@@ -16,9 +17,12 @@ async def lifespan(_: FastAPI):
     setup_logger(settings)
     logger.warning(f"Starting the application at {time.time()}")
 
-    """Initialize connections on startup"""
+    # Initialize connections
     await manager.initialize()
-    # TODO: start listening redis pubsub
+
+
+    # Start redis listener
+    asyncio.create_task(manager.redis_listener())
     yield
     logger.warning(f"Shutting down the application at {time.time()}")
 
