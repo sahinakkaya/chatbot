@@ -1,4 +1,5 @@
 from kafka import KafkaConsumer, KafkaProducer
+from datetime import datetime
 import json
 from openai import OpenAI
 from ai_consumer.config import settings
@@ -29,6 +30,18 @@ class AIConsumer:
         self.openai_client = OpenAI(api_key=settings.openai_api_key)
         logger.info("AI Consumer initialized")
 
+    def process_message(self, message):
+        content = message.get('content')
+        ai_response = f"AI response to message: {content}"
+        response_message = {
+            'type': 'response',
+            'content': ai_response,
+            'userid': message.get('userid'),
+            'timestamp': datetime.utcnow().isoformat(),
+        }
+        self.producer.send(settings.responses_topic, value=response_message)
+        logger.info(f"Sent response: {response_message}")
+
 
     def consume(self):
         """Consume messages from Kafka and process them"""
@@ -37,11 +50,12 @@ class AIConsumer:
         try:
             for message in self.consumer:
                 logger.info(f"Received message: {message.value}")
+                self.process_message(message.value)
 
         except KeyboardInterrupt:
             logger.info("Shutting down AI Consumer")
         except Exception as e:
-            logger.error("Consumer error", extra={"error": str(e)})
+            logger.error(f"Consumer error: {str(e)}", extra={"error": str(e)})
         finally:
             self.cleanup()
 
