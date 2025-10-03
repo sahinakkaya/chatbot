@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     allow_methods: Sequence[str] = ["*"]
     allow_headers: Sequence[str] = ["*"]
 
+
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+
     kafka_bootstrap_servers: str = "localhost:9092"
     server_id: str = "server_1"
 

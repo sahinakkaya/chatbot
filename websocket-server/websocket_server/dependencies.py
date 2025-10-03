@@ -1,4 +1,6 @@
 import logging
+import redis.asyncio as redis
+import redis.asyncio.client as redis_client
 from fastapi import WebSocket
 import json
 from typing import Dict, Set
@@ -12,16 +14,24 @@ logger = logging.getLogger(__name__)
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
-        self.redis_client = None
+        self.redis_client: redis.Redis | None = None
         self.kafka_producer: KafkaProducer | None = None
+        self.pubsub: redis_client.PubSub | None = None
 
     async def initialize(self):
+        self.redis_client = await redis.Redis(
+            host=settings.redis_host, port=settings.redis_port, decode_responses=True
+        )
+
+        self.pubsub = self.redis_client.pubsub()
+        logger.info("Redis connected", extra={"server_id": settings.server_id})
         self.kafka_producer = KafkaProducer(
             bootstrap_servers=settings.kafka_bootstrap_servers.split(","),
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
             retries=3,
             max_block_ms=5000,
         )
+
         logger.info("Kafka connected", extra={"server_id": settings.server_id})
 
     async def connect(self, websocket: WebSocket, room: str):

@@ -18,8 +18,12 @@ async def lifespan(_: FastAPI):
 
     """Initialize connections on startup"""
     await manager.initialize()
+    # TODO: start listening redis pubsub
     yield
     logger.warning(f"Shutting down the application at {time.time()}")
 
     if manager.kafka_producer:
         manager.kafka_producer.close()
+
+    if manager.redis_client:
+        await manager.redis_client.aclose()
