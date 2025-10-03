@@ -115,9 +115,6 @@ class ConnectionManager:
                 )
                 await asyncio.sleep(1)
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
     async def broadcast(self, user_id: str, data: dict):
         if user_id in self.active_connections:
             for connection in self.active_connections[user_id]:

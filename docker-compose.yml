@@ -27,6 +27,11 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     networks:
       - app-network
 
@@ -38,6 +43,101 @@ services:
     networks:
       - app-network
 
+  websocket-server-1:
+    build:
+      context: .
+      dockerfile: ./websocket-server/Dockerfile
+
+    image: websocket-server
+    env_file:
+      - ./websocket-server/.env.example
+    environment: 
+      SERVER_ID: "server_2"
+    volumes:
+      - log-data:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # WebSocket Server Instance 2
+  websocket-server-2:
+    build:
+      context: .
+      dockerfile: ./websocket-server/Dockerfile
+    env_file:
+      - ./websocket-server/.env.example
+    environment: 
+      SERVER_ID: "server_2"
+    volumes:
+      - log-data:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # AI Consumer Service
+  ai-consumer:
+    build:
+      context: .
+      dockerfile: ./ai-consumer/Dockerfile
+    env_file:
+      - ./ai-consumer/.env.example
+    volumes:
+      - log-data:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Message Relay Service
+  message-relay:
+    build:
+      context: .
+      dockerfile: ./message-relay/Dockerfile
+    env_file:
+      - ./message-relay/.env.example
+    volumes:
+      - log-data:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./test-ui.html:/usr/share/nginx/html/test-ui.html:ro
+    depends_on:
+      - websocket-server-1
+      - websocket-server-2
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
+
+
+volumes:
+  log-data:

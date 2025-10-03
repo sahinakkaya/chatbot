@@ -54,7 +54,6 @@ async def websocket_endpoint(
                 )
     except WebSocketDisconnect:
         await conn_manager.disconnect(websocket, room)
-        await conn_manager.broadcast(room, {'message': f"User {userid} disconnected",})
     except Exception as e:
         logger.error(
             f"WebSocket error",
