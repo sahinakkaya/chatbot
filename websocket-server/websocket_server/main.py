@@ -27,7 +27,7 @@ app.add_middleware(CorrelationIdMiddleware)
 async def websocket_endpoint(
     websocket: WebSocket, token: str = Query(...), userid: str = Query(...)
 ):
-    room = f"room_{token}"
+    room = "user:" + userid
     await conn_manager.connect(websocket, room)
     try:
         while True:
@@ -35,7 +35,7 @@ async def websocket_endpoint(
             await conn_manager.send_personal_message(f"You wrote: {data}", websocket)
             await conn_manager.broadcast(f"User {userid} says: {data}", room)
     except WebSocketDisconnect:
-        conn_manager.disconnect(websocket, room)
+        await conn_manager.disconnect(websocket, room)
         await conn_manager.broadcast(f"User {userid} left the chat", room)
 
 

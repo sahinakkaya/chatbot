@@ -2,11 +2,7 @@ from logging.config import dictConfig
 
 
 # List of packages to configure logging for
-packages = [
-    "websocket_server",
-    "kafka",
-    "uvicorn"
-]
+packages = ["websocket_server", "kafka", "uvicorn"]
 
 
 def setup_logger(settings):
@@ -54,12 +50,11 @@ def setup_logger(settings):
                     "filters": ["correlation_id"],
                 },
             },
-
             # use the root logger to catch all logs
             "root": {
                 "handlers": ["default", "rotating_file"],
                 "level": settings.log_level,
-                "propagate": False
+                "propagate": False,
             },
             # "loggers": {
             #     **{
