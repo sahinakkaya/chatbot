@@ -4,4 +4,16 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "kafka-python>=2.2.15",
+    "pydantic-settings>=2.11.0",
+    "redis>=6.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "logger",
+]
+
+[tool.uv.sources]
+logger = { path = "../common/logger" }
