@@ -2,11 +2,11 @@ import logging
 from fastapi import WebSocket, Query
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from config import settings
-from dependencies import conn_manager
+from websocket_server.config import settings
+from websocket_server.dependencies import conn_manager
 from asgi_correlation_id import CorrelationIdMiddleware
 
-from middleware import lifespan
+from websocket_server.middleware import lifespan
 
 logger = logging.getLogger(__name__)
 

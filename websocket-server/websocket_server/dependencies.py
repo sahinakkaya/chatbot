@@ -1,9 +1,12 @@
+import logging
 from fastapi import WebSocket
 import json
 from typing import Dict, Set
 
 from kafka import KafkaProducer
-from config import settings
+from websocket_server.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:

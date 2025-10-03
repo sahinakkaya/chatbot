@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from logger import setup_logger
 from fastapi import FastAPI
 
-from config import settings
+from websocket_server.config import settings
 
 logger = logging.getLogger(__name__)
 

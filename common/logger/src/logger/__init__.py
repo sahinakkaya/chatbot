@@ -1,9 +1,9 @@
 from logging.config import dictConfig
 
 
+# List of packages to configure logging for
 packages = [
     "websocket_server",
-    "websocket-server",
     "uvicorn"
 ]
 
@@ -54,10 +54,12 @@ def setup_logger(settings):
                 },
             },
 
+            # use the root logger to catch all logs
             "root": {
                 "handlers": ["default", "rotating_file"],
                 "level": settings.log_level,
-            }
+                "propagate": False
+            },
             # "loggers": {
             #     **{
             #         package: {
