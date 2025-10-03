@@ -2,6 +2,7 @@ import logging
 from fastapi import WebSocket, Query
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from config import settings
 from dependencies import conn_manager
 from asgi_correlation_id import CorrelationIdMiddleware
 
@@ -13,10 +14,10 @@ logger = logging.getLogger(__name__)
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.allow_origins,
+    allow_credentials=settings.allow_credentials,
+    allow_methods=settings.allow_methods,
+    allow_headers=settings.allow_headers,
 )
 
 app.add_middleware(CorrelationIdMiddleware)
