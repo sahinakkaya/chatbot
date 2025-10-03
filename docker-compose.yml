@@ -49,12 +49,13 @@ services:
       dockerfile: ./websocket-server/Dockerfile
 
     image: websocket-server
+    container_name: ws-server-1
     env_file:
       - ./websocket-server/.env.example
     environment: 
       SERVER_ID: "server_2"
     volumes:
-      - log-data:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -69,12 +70,13 @@ services:
     build:
       context: .
       dockerfile: ./websocket-server/Dockerfile
+    container_name: ws-server-2
     env_file:
       - ./websocket-server/.env.example
-    environment: 
+    environment:
       SERVER_ID: "server_2"
     volumes:
-      - log-data:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -89,10 +91,11 @@ services:
     build:
       context: .
       dockerfile: ./ai-consumer/Dockerfile
+    container_name: ai-consumer
     env_file:
       - ./ai-consumer/.env.example
     volumes:
-      - log-data:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -107,10 +110,11 @@ services:
     build:
       context: .
       dockerfile: ./message-relay/Dockerfile
+    container_name: message-relay
     env_file:
       - ./message-relay/.env.example
     volumes:
-      - log-data:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -123,6 +127,7 @@ services:
   # Nginx Load Balancer
   nginx:
     image: nginx:alpine
+    container_name: nginx
     ports:
       - "8080:80"
     volumes:
@@ -137,7 +142,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-
-volumes:
-  log-data:
