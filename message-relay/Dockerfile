@@ -12,8 +12,8 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
-# Copy logger dependency first
-COPY ./common/logger /common/logger
+# Copy common dependencies first
+COPY ./common /common
 COPY ./message-relay/uv.lock ./message-relay/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=./message-relay/uv.lock,target=uv.lock \

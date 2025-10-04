@@ -12,8 +12,9 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
-# Copy logger dependency first
-COPY ./common/logger /common/logger
+# Copy common dependencies first
+COPY ./common/ /common
+
 COPY ./websocket-server/uv.lock ./websocket-server/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=./websocket-server/uv.lock,target=uv.lock \
@@ -31,6 +32,9 @@ FROM python:3.13-slim-bookworm
 # It is important to use the image that matches the builder, as the path to the
 # Python executable must be the same, e.g., using `python:3.11-slim-bookworm`
 # will fail.
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
 # Setup a non-root user
 RUN groupadd --system --gid 999 nonroot \
@@ -52,4 +56,5 @@ USER nonroot
 WORKDIR /app
 
 # Run the FastAPI application by default
-CMD ["uvicorn", "websocket_server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Using multiple workers for better concurrency (recommended: 2-4 workers per core)
+CMD ["uvicorn", "websocket_server.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-level", "info"]

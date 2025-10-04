@@ -8,6 +8,7 @@ from typing import Dict, Set
 
 from kafka import KafkaProducer
 from websocket_server.config import settings
+import metrics.websocket as metrics
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,24 @@ class ConnectionManager:
 
         logger.info(f"Kafka connected server_id={settings.server_id}")
 
+        # await self.pubsub.psubscribe("user:*")
+
+    async def teardown(self):
+        if self.pubsub:
+            await self.pubsub.close()
+            logger.info(f"Redis pubsub closed server_id={settings.server_id}")
+        if self.redis_client:
+            await self.redis_client.aclose()
+            logger.info(f"Redis client closed server_id={settings.server_id}")
+        if self.kafka_producer:
+            self.kafka_producer.close()
+            logger.info(f"Kafka producer closed server_id={settings.server_id}")
+
     async def connect(self, websocket: WebSocket, user_id: str):
         assert self.pubsub is not None, "PubSub not initialized"
         logger.info(f"user is is {user_id}")
         await websocket.accept()
+
         if user_id not in self.active_connections:
             self.active_connections[user_id] = set()
             # Subscribe to user-specific Redis channel
@@ -51,11 +66,17 @@ class ConnectionManager:
             )
 
         self.active_connections[user_id].add(websocket)
+
+        # Update metrics
+        metrics.websocket_connections_total.labels(server_id=settings.server_id).inc()
+        total_connections = sum(len(conns) for conns in self.active_connections.values())
+        metrics.websocket_connections_active.labels(server_id=settings.server_id).set(total_connections)
+
         logger.info(
             f"WebSocket connected: server_id={settings.server_id}, {user_id=} total_connections_of_user={len(self.active_connections[user_id])}",
         )
 
-    async def disconnect(self, websocket: WebSocket, user_id: str):
+    async def disconnect(self, websocket: WebSocket, user_id: str, reason: str = 'normal'):
         assert self.pubsub is not None, "PubSub not initialized"
 
         if user_id in self.active_connections:
@@ -67,6 +88,12 @@ class ConnectionManager:
                 logger.info(
                     f"Unsubscribed from Redis channel server_id={settings.server_id}, user_id={user_id}",
                 )
+
+        # Update metrics
+        metrics.websocket_disconnections_total.labels(server_id=settings.server_id, reason=reason).inc()
+        total_connections = sum(len(conns) for conns in self.active_connections.values())
+        metrics.websocket_connections_active.labels(server_id=settings.server_id).set(total_connections)
+
         logger.info(
             f"WebSocket disconnected: server_id={settings.server_id}, {user_id=} total_connections_of_user={len(self.active_connections.get(user_id, []))}",
         )
@@ -77,11 +104,12 @@ class ConnectionManager:
 
         try:
             self.kafka_producer.send(topic, message)
-            self.kafka_producer.flush()
+            metrics.websocket_kafka_publish_total.labels(server_id=settings.server_id, topic=topic).inc()
             logger.info(
                 f"Published to Kafka {topic=} user_id={message.get('userid')}",
             )
         except Exception as e:
+            metrics.websocket_kafka_publish_errors_total.labels(server_id=settings.server_id, topic=topic).inc()
             logger.error(
                 f"Kafka publish failed error={str(e)}",
                 extra={"topic": topic, "error": str(e)},
@@ -95,30 +123,39 @@ class ConnectionManager:
                 message = await self.pubsub.get_message(
                     ignore_subscribe_messages=True, timeout=1.0
                 )
-                logger.info(f"Listening to Redis messages...")
-                logger.info(message)
-                if message and message["type"] == "message":
-                    channel = message["channel"]
+
+                if message and message["type"] in ("message", "pmessage"):
+                    channel = message.get("channel") or message.get("pattern") or ""
                     user_id = channel.split(":")[1] if ":" in channel else None
 
                     if user_id:
                         data = json.loads(message["data"])
+                        metrics.websocket_redis_messages_received_total.labels(
+                            server_id=settings.server_id, channel=channel
+                        ).inc()
                         await self.broadcast(user_id, data)
                         logger.info(
-                            f"Relayed message from Redis",
+                            f"Relayed message from Redis to {user_id}",
                         )
 
-                await asyncio.sleep(0.01)  # Small delay to prevent busy waiting
+                await asyncio.sleep(0.01)
             except Exception as e:
-                logger.error(
-                    f"Redis listener error {str(e)}",
-                )
+                if "pubsub connection not set" not in str(e):
+                    metrics.websocket_redis_errors_total.labels(
+                        server_id=settings.server_id, operation="listener"
+                    ).inc()
+                    logger.error(
+                        f"Redis listener error {str(e)}",
+                    )
                 await asyncio.sleep(1)
 
     async def broadcast(self, user_id: str, data: dict):
         if user_id in self.active_connections:
             for connection in self.active_connections[user_id]:
                 await connection.send_json(data)
+                metrics.websocket_messages_sent_total.labels(
+                    server_id=settings.server_id, userid=user_id
+                ).inc()
 
 
 conn_manager = ConnectionManager()

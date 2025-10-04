@@ -9,7 +9,11 @@ dependencies = [
     "openai>=2.1.0",
     "logger",
     "pydantic-settings>=2.11.0",
+    "lz4>=4.4.4",
+    "tenacity>=9.1.2",
+    "metrics",
 ]
 
 [tool.uv.sources]
 logger = { path = "../common/logger" }
+metrics = { path = "../common/metrics" }

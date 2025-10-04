@@ -9,7 +9,10 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "logger",
     "redis>=6.4.0",
+    "lz4>=4.4.4",
+    "metrics",
 ]
 
 [tool.uv.sources]
 logger = { path = "../common/logger" }
+metrics = { path = "../common/metrics" }

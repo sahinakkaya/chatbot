@@ -25,9 +25,5 @@ async def lifespan(_: FastAPI):
     asyncio.create_task(manager.redis_listener())
     yield
     logger.warning(f"Shutting down the application at {time.time()}")
+    await manager.teardown()
 
-    if manager.kafka_producer:
-        manager.kafka_producer.close()
-
-    if manager.redis_client:
-        await manager.redis_client.aclose()

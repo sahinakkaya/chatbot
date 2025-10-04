@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     incoming_topic: str = "incoming_messages"
     responses_topic: str = "responses"
 
+    # Concurrency
+    max_workers: int = 50  # Number of concurrent OpenAI API calls
+
+    # Metrics
+    metrics_port: int = 8002  # Port for Prometheus metrics HTTP server
 
     # logging
     log_level: str = "INFO"

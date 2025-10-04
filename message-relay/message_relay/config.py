@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     kafka_bootstrap_servers: str = "localhost:9092"
     incoming_topic: str = "responses"
 
+    # Metrics
+    metrics_port: int = 8001  # Port for Prometheus metrics HTTP server
 
     # logging
     log_level: str = "INFO"
