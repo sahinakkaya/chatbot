@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from logger import setup_logger
 from fastapi import FastAPI
-from websocket_server.dependencies import conn_manager as manager
+from websocket_server.util import redis_helper, kafka_helper
 
 from websocket_server.config import settings
 
@@ -18,12 +18,21 @@ async def lifespan(_: FastAPI):
     logger.warning(f"Starting the application at {time.time()}")
 
     # Initialize connections
-    await manager.initialize()
+    # TODO: add error handling and retries
+    await redis_helper.initialize()
+    kafka_helper.initialize(
+        producer_args={
+            "retries": 3,
+            "max_block_ms": 5000,
+        }
+    )
 
 
     # Start listening to Redis messages
-    asyncio.create_task(manager.redis_helper.pubsub.run())
+    asyncio.create_task(redis_helper.pubsub.run())
     yield
     logger.warning(f"Shutting down the application at {time.time()}")
-    await manager.teardown()
+
+    await redis_helper.teardown()
+    kafka_helper.teardown()
 

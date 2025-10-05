@@ -1,15 +1,18 @@
 import logging
 import json
 from fastapi import WebSocket
+from functools import partial
 from typing import Dict, Set
 from websocket_server.config import settings
 import metrics.websocket as metrics
 from logger import correlation_id_var
+from websocket_server.util import redis_helper
 
 logger = logging.getLogger(__name__)
 
 
-class WebSocketConnectionManager:
+
+class WebSocketManager:
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
 
@@ -21,6 +24,9 @@ class WebSocketConnectionManager:
         if user_id not in self.active_connections:
             self.active_connections[user_id] = set()
             is_first_connection = True
+            channel = f"user:{user_id}"
+            message_handler = partial(self.broadcast, channel)
+            await redis_helper.subscribe(channel, message_handler)
 
         self.active_connections[user_id].add(websocket)
 
@@ -46,6 +52,8 @@ class WebSocketConnectionManager:
             if not self.active_connections[user_id]:
                 is_last_connection = True
                 del self.active_connections[user_id]
+
+                await redis_helper.unsubscribe(user_id)
                 logger.info(f"All connections closed for user_id={user_id}")
 
         metrics.websocket_disconnections_total.labels(
@@ -77,3 +85,5 @@ class WebSocketConnectionManager:
                 metrics.websocket_messages_sent_total.labels(
                     server_id=settings.server_id, userid=user_id
                 ).inc()
+
+websocket_manager = WebSocketManager()

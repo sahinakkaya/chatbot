@@ -22,5 +22,9 @@ class Settings(BaseSettings):
     app_name: str = "websocket-server"
     log_folder: str = "/var/log"
 
+    token_ttl: int = 3600
+    user_rate_limit_max_requests: int = 10
+    user_rate_limit_window_seconds: int = 60
+
 
 settings = Settings()
