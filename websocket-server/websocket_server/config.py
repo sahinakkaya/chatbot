@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     redis_port: int = 6379
 
     kafka_bootstrap_servers: str = "localhost:9092"
+    produce_topic: str = ""
+    consume_topic: str = ""
     server_id: str = "server_1"
 
     # logging
