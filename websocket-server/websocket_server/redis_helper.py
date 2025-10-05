@@ -36,33 +36,6 @@ class RedisHelper:
             f"Unsubscribed from Redis channel server_id={self.settings.server_id}, user_id={user_id}"
         )
 
-    async def listen_and_broadcast(
-        self, message_handler: Callable[[str, dict], Awaitable[None]]
-    ):
-        if self.pubsub is None:
-            raise RuntimeError("PubSub not initialized")
-
-        while True:
-            try:
-                message = await self.pubsub.get_message(
-                    ignore_subscribe_messages=True, timeout=1.0
-                )
-
-                if message and message["type"] in ("message", "pmessage"):
-                    channel = message.get("channel") or message.get("pattern") or ""
-                    user_id = channel.split(":")[1] if ":" in channel else None
-
-                    if user_id:
-                        data = json.loads(message["data"])
-                        await message_handler(user_id, data)
-                        logger.info(f"Relayed message from Redis to {user_id}")
-
-                await asyncio.sleep(0.01)
-            except Exception as e:
-                if "pubsub connection not set" not in str(e):
-                    logger.error(f"Redis listener error {str(e)}")
-                await asyncio.sleep(1)
-
     async def teardown(self):
         if self.pubsub:
             await self.pubsub.close()

@@ -21,8 +21,7 @@ async def lifespan(_: FastAPI):
     await manager.initialize()
 
 
-    # Start redis listener
-    # asyncio.create_task(manager.listen_and_broadcast())
+    # Start listening to Redis messages
     asyncio.create_task(manager.redis_helper.pubsub.run())
     yield
     logger.warning(f"Shutting down the application at {time.time()}")

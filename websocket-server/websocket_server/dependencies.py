@@ -50,7 +50,4 @@ class ConnectionManager:
     def publish_to_kafka(self, topic: str, message: dict):
         self.kafka_helper.publish(topic, message)
 
-    async def listen_and_broadcast(self):
-        await self.redis_helper.listen_and_broadcast(self.ws_manager.broadcast)
-
 conn_manager = ConnectionManager()
