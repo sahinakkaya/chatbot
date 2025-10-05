@@ -5,14 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "kafka-python>=2.2.15",
     "pydantic-settings>=2.11.0",
     "logger",
-    "redis>=6.4.0",
-    "lz4>=4.4.4",
     "metrics",
+    "redis-helper",
+    "kafka-helper",
 ]
 
 [tool.uv.sources]
 logger = { path = "../common/logger" }
 metrics = { path = "../common/metrics" }
+kafka-helper = { path = "../common/kafka-helper" }
+redis-helper = { path = "../common/redis-helper" }

@@ -10,8 +10,8 @@ class Settings(BaseSettings):
 
     # Kafka
     kafka_bootstrap_servers: str = "localhost:9092"
-    incoming_topic: str = "incoming_messages"
-    responses_topic: str = "responses"
+    consume_topic: str = "incoming_messages"
+    produce_topic: str = "responses"
 
     # Concurrency
     max_workers: int = 50  # Number of concurrent OpenAI API calls

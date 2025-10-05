@@ -12,8 +12,12 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
-COPY ./common /common
+
 # Copy common dependencies first
+COPY ./common/kafka-helper /common/kafka-helper
+COPY ./common/logger /common/logger
+COPY ./common/metrics /common/metrics
+
 COPY ./ai-consumer/uv.lock ./ai-consumer/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=./ai-consumer/uv.lock,target=uv.lock \

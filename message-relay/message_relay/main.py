@@ -1,10 +1,11 @@
 import logging
+import asyncio
 from logger import setup_logger
 from message_relay.config import settings
 from message_relay.dependencies import MessageRelayService
 from prometheus_client import start_http_server
 
-if __name__ == "__main__":
+async def main():
     setup_logger(settings)
     logger = logging.getLogger(__name__)
 
@@ -14,5 +15,8 @@ if __name__ == "__main__":
 
     logger.warning("Message Relay Service initialized.")
     message_relay_service = MessageRelayService()
-    message_relay_service.start()
+    await message_relay_service.start()
 
+
+if __name__ == "__main__":
+    asyncio.run(main())

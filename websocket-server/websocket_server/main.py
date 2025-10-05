@@ -70,7 +70,7 @@ async def websocket_endpoint(
                     }
                 )
     except WebSocketDisconnect:
-        await conn_manager.disconnect(websocket, room, reason='client_disconnect')
+        await conn_manager.disconnect(websocket, room, reason="client_disconnect")
     except Exception as e:
         logger.error(
             f"WebSocket error",
@@ -79,7 +79,7 @@ async def websocket_endpoint(
         metrics.websocket_message_errors_total.labels(
             server_id=settings.server_id, error_type="exception"
         ).inc()
-        await conn_manager.disconnect(websocket, userid, reason='error')
+        await conn_manager.disconnect(websocket, userid, reason="error")
 
 
 @app.get("/health")
@@ -90,12 +90,16 @@ async def health_check():
         "service": "websocket-server",
         "server_id": settings.server_id,
         "active_users": len(conn_manager.ws_manager.active_connections),
-        "total_connections": sum(len(conns) for conns in conn_manager.ws_manager.active_connections.values())
+        "total_connections": sum(
+            len(conns) for conns in conn_manager.ws_manager.active_connections.values()
+        ),
     }
+
 
 @app.get("/")
 async def root():
     return {"message": "WebSocket Server", "server_id": settings.server_id}
+
 
 @app.get("/metrics")
 async def metrics_endpoint():

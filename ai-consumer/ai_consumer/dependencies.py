@@ -1,12 +1,16 @@
-from kafka import KafkaConsumer, KafkaProducer
 from datetime import datetime
-import json
 import time
 from openai import OpenAI
 from ai_consumer.config import settings
 from concurrent.futures import ThreadPoolExecutor
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 import metrics.ai_consumer as metrics
+from kafka_helper import KafkaHelper
 
 import logging
 
@@ -15,24 +19,21 @@ logger = logging.getLogger(__name__)
 
 class AIConsumer:
     def __init__(self):
-        self.consumer = KafkaConsumer(
-            settings.incoming_topic,
-            bootstrap_servers=settings.kafka_bootstrap_servers.split(","),
-            value_deserializer=lambda v: json.loads(v.decode("utf-8")),
-            group_id="ai-consumer-group",
-            auto_offset_reset="earliest",
-            enable_auto_commit=True,
-        )
-
-        self.producer = KafkaProducer(
-            bootstrap_servers=settings.kafka_bootstrap_servers.split(","),
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+        self.kafka_helper = KafkaHelper(settings)
+        self.kafka_helper.initialize(
+            consumer_args={
+                "group_id": "ai-consumer-group",
+                "auto_offset_reset": "earliest",
+                "enable_auto_commit": True,
+            }
         )
 
         self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
         self.executor = ThreadPoolExecutor(max_workers=settings.max_workers)
 
-        logger.info(f"AI Consumer initialized with {settings.max_workers} worker threads")
+        logger.info(
+            f"AI Consumer initialized with {settings.max_workers} worker threads"
+        )
 
     def process_message(self, message):
         """Process a single message with error handling"""
@@ -52,20 +53,31 @@ class AIConsumer:
                 "processing_time_ms": int(processing_time * 1000),
             }
 
-            self.producer.send(settings.responses_topic, value=response_message)
+            self.kafka_helper.publish(settings.produce_topic, response_message)
 
             # Update metrics
             metrics.ai_consumer_messages_processed_total.labels(status="success").inc()
-            metrics.ai_consumer_processing_duration_seconds.labels(status="success").observe(processing_time)
-            metrics.ai_consumer_kafka_publish_total.labels(topic=settings.responses_topic, status="success").inc()
+            metrics.ai_consumer_processing_duration_seconds.labels(
+                status="success"
+            ).observe(processing_time)
+            metrics.ai_consumer_kafka_publish_total.labels(
+                topic=settings.produce_topic, status="success"
+            ).inc()
 
             logger.info(f"Sent response: {response_message}")
         except Exception as e:
             processing_time = time.time() - start_time
-            metrics.ai_consumer_messages_failed_total.labels(error_type=type(e).__name__).inc()
+            metrics.ai_consumer_messages_failed_total.labels(
+                error_type=type(e).__name__
+            ).inc()
             metrics.ai_consumer_messages_processed_total.labels(status="failed").inc()
-            metrics.ai_consumer_processing_duration_seconds.labels(status="failed").observe(processing_time)
-            logger.error(f"Failed to process message: {str(e)}", extra={"userid": userid, "error": str(e)})
+            metrics.ai_consumer_processing_duration_seconds.labels(
+                status="failed"
+            ).observe(processing_time)
+            logger.error(
+                f"Failed to process message: {str(e)}",
+                extra={"userid": userid, "error": str(e)},
+            )
             raise
 
     @retry(
@@ -75,13 +87,11 @@ class AIConsumer:
         reraise=True,
         before_sleep=lambda retry_state: metrics.ai_consumer_openai_retries_total.labels(
             attempt=str(retry_state.attempt_number)
-        ).inc()
+        ).inc(),
     )
     def process_with_openai(self, content):
         model = "gpt-3.5-turbo"
         start_time = time.time()
-        time.sleep(0.2)
-        # return "asdfasf"
 
         try:
             response = self.openai_client.chat.completions.create(
@@ -101,22 +111,36 @@ class AIConsumer:
             duration = time.time() - start_time
 
             # Update metrics
-            metrics.ai_consumer_openai_requests_total.labels(model=model, status="success").inc()
-            metrics.ai_consumer_openai_duration_seconds.labels(model=model).observe(duration)
-            metrics.ai_consumer_openai_tokens_total.labels(model=model, type="prompt").inc(response.usage.prompt_tokens)
-            metrics.ai_consumer_openai_tokens_total.labels(model=model, type="completion").inc(response.usage.completion_tokens)
-            metrics.ai_consumer_openai_tokens_total.labels(model=model, type="total").inc(response.usage.total_tokens)
+            metrics.ai_consumer_openai_requests_total.labels(
+                model=model, status="success"
+            ).inc()
+            metrics.ai_consumer_openai_duration_seconds.labels(model=model).observe(
+                duration
+            )
+            metrics.ai_consumer_openai_tokens_total.labels(
+                model=model, type="prompt"
+            ).inc(response.usage.prompt_tokens)
+            metrics.ai_consumer_openai_tokens_total.labels(
+                model=model, type="completion"
+            ).inc(response.usage.completion_tokens)
+            metrics.ai_consumer_openai_tokens_total.labels(
+                model=model, type="total"
+            ).inc(response.usage.total_tokens)
 
             logger.info(f"AI response: {ai_response}")
             return ai_response
         except TimeoutError as e:
-            metrics.ai_consumer_openai_requests_total.labels(model=model, status="timeout").inc()
+            metrics.ai_consumer_openai_requests_total.labels(
+                model=model, status="timeout"
+            ).inc()
             metrics.ai_consumer_openai_errors_total.labels(error_type="timeout").inc()
             logger.error(f"OpenAI API timeout: {str(e)}", extra={"error": str(e)})
             raise
         except Exception as e:
             error_type = "rate_limit" if "rate_limit" in str(e).lower() else "api_error"
-            metrics.ai_consumer_openai_requests_total.labels(model=model, status="error").inc()
+            metrics.ai_consumer_openai_requests_total.labels(
+                model=model, status="error"
+            ).inc()
             metrics.ai_consumer_openai_errors_total.labels(error_type=error_type).inc()
             logger.error(f"OpenAI API error: {str(e)}", extra={"error": str(e)})
             raise
@@ -125,16 +149,23 @@ class AIConsumer:
         """Consume messages from Kafka and process them concurrently"""
         logger.info("Starting AI Consumer service with concurrent processing")
 
+        assert self.kafka_helper.consumer is not None, "Kafka consumer not initialized"
         try:
-            for message in self.consumer:
+            for message in self.kafka_helper.consumer:
                 logger.info(f"Received message: {message.value}")
 
                 # Update metrics
-                metrics.ai_consumer_messages_received_total.labels(topic=settings.incoming_topic).inc()
+                metrics.ai_consumer_messages_received_total.labels(
+                    topic=settings.consume_topic
+                ).inc()
 
                 # Update thread pool metrics
-                metrics.ai_consumer_thread_pool_active.set(len([t for t in self.executor._threads if t.is_alive()]))
-                metrics.ai_consumer_thread_pool_queue_size.set(self.executor._work_queue.qsize())
+                metrics.ai_consumer_thread_pool_active.set(
+                    len([t for t in self.executor._threads if t.is_alive()])
+                )
+                metrics.ai_consumer_thread_pool_queue_size.set(
+                    self.executor._work_queue.qsize()
+                )
 
                 # Submit to thread pool for concurrent processing
                 self.executor.submit(self.process_message, message.value)
@@ -150,8 +181,5 @@ class AIConsumer:
         if self.executor:
             logger.info("Waiting for worker threads to complete...")
             self.executor.shutdown(wait=True, cancel_futures=False)
-        if self.consumer:
-            self.consumer.close()
-        if self.producer:
-            self.producer.close()
+        self.kafka_helper.teardown()
         logger.info("AI Consumer stopped")

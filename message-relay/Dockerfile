@@ -13,7 +13,11 @@ ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 # Copy common dependencies first
-COPY ./common /common
+COPY ./common/kafka-helper /common/kafka-helper
+COPY ./common/redis-helper /common/redis-helper
+COPY ./common/logger /common/logger
+COPY ./common/metrics /common/metrics
+
 COPY ./message-relay/uv.lock ./message-relay/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=./message-relay/uv.lock,target=uv.lock \

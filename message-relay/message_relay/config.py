@@ -7,7 +7,8 @@ class Settings(BaseSettings):
 
     # Kafka
     kafka_bootstrap_servers: str = "localhost:9092"
-    incoming_topic: str = "responses"
+    consume_topic: str = "responses"
+    produce_topic: str = ""
 
     # Metrics
     metrics_port: int = 8001  # Port for Prometheus metrics HTTP server

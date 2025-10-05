@@ -1,0 +1,19 @@
+[project]
+name = "redis-helper"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Şahin Akkaya", email = "sahin@sahinakkaya.dev" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "redis>=6.4.0",
+]
+
+[project.scripts]
+redis-helper = "redis_helper:main"
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"

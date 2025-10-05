@@ -1,9 +1,6 @@
 import logging
-import asyncio
 import redis.asyncio as redis
 import redis.asyncio.client as redis_client
-import json
-from typing import Callable, Awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +32,11 @@ class RedisHelper:
         logger.info(
             f"Unsubscribed from Redis channel server_id={self.settings.server_id}, user_id={user_id}"
         )
+
+    async def publish(self, channel: str, message: str):
+        if self.redis_client is None:
+            raise RuntimeError("Redis client not initialized")
+        await self.redis_client.publish(channel, message)
 
     async def teardown(self):
         if self.pubsub:

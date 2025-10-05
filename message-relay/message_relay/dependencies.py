@@ -1,5 +1,6 @@
-from kafka import KafkaConsumer
 import json
+from redis_helper import RedisHelper
+from kafka_helper import KafkaHelper
 import redis
 from message_relay.config import settings
 import time
@@ -11,29 +12,28 @@ logger = logging.getLogger(__name__)
 
 class MessageRelayService:
     def __init__(self):
-        self.consumer = KafkaConsumer(
-            settings.incoming_topic,
-            bootstrap_servers=settings.kafka_bootstrap_servers.split(','),
-            value_deserializer=lambda v: json.loads(v.decode('utf-8')),
-            group_id='message-relay-group',
-            auto_offset_reset='earliest',
-        )
-        self.redis_client = redis.Redis(
-            host=settings.redis_host, port=settings.redis_port, decode_responses=True
-        )
+        self.kafka_helper = KafkaHelper(settings)
+        self.kafka_helper.initialize(consumer_args={
+            "group_id":'message-relay-group',
+            "auto_offset_reset":'earliest',
+        })
+        self.redis_helper = RedisHelper(settings)
 
-    def start(self):
+    async def start(self):
         """Consume messages from Kafka and process them"""
         logger.info("Starting Message Relay Service")
 
+        await self.redis_helper.initialize()
+
+        assert self.kafka_helper.consumer is not None, "Kafka consumer is not initialized"
         try:
-            for message in self.consumer:
+            for message in self.kafka_helper.consumer:
                 logger.info(f"Received message: {message.value}")
 
                 # Update metrics
-                metrics.message_relay_messages_received_total.labels(topic=settings.incoming_topic).inc()
+                metrics.message_relay_messages_received_total.labels(topic=settings.consume_topic).inc()
 
-                self.process_message(message.value)
+                await self.process_message(message.value)
 
         except KeyboardInterrupt:
             logger.info("Shutting down Message Relay Service")
@@ -41,9 +41,9 @@ class MessageRelayService:
             metrics.message_relay_kafka_errors_total.labels(error_type=type(e).__name__).inc()
             logger.error(f"Consumer error: {str(e)}", extra={"error": str(e)})
         finally:
-            self.cleanup()
+            await self.cleanup()
 
-    def process_message(self, message: dict):
+    async def process_message(self, message: dict):
         """Process message and relay to Redis"""
         start_time = time.time()
 
@@ -62,7 +62,7 @@ class MessageRelayService:
             })
 
             # Publish to Redis for WebSocket distribution
-            self.publish_to_redis(user_id, message)
+            await self.publish_to_redis(user_id, message)
 
             # Update metrics
             processing_time = time.time() - start_time
@@ -85,7 +85,7 @@ class MessageRelayService:
                 "error": str(e)
             })
 
-    def publish_to_redis(self, user_id: str, message: dict):
+    async def publish_to_redis(self, user_id: str, message: dict):
         """Publish message to user-specific Redis channel"""
         start_time = time.time()
 
@@ -96,8 +96,7 @@ class MessageRelayService:
             message_json = json.dumps(message)
             logger.info(message_json)
 
-            # Publish to Redis pub/sub
-            subscribers = self.redis_client.publish(channel, message_json)
+            subscribers = await self.redis_helper.publish(channel, message_json)
 
             # Update metrics
             publish_time = time.time() - start_time
@@ -123,11 +122,8 @@ class MessageRelayService:
             })
             raise
 
-    def cleanup(self):
-        if self.consumer:
-            self.consumer.close()
-
-        if self.redis_client:
-            self.redis_client.close()
+    async def cleanup(self):
+        self.kafka_helper.teardown()
+        await self.redis_helper.teardown()
         logger.info("Message Relay Service stopped")
 

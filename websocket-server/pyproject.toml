@@ -6,15 +6,16 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.118.0",
-    "kafka-python>=2.2.15",
+    "kafka-helper",
     "logger",
-    "lz4>=4.4.4",
     "metrics",
     "pydantic-settings>=2.11.0",
-    "redis>=6.4.0",
+    "redis-helper",
     "uvicorn[standard]>=0.37.0",
 ]
 
 [tool.uv.sources]
 logger = { path = "../common/logger" }
 metrics = { path = "../common/metrics" }
+kafka-helper = { path = "../common/kafka-helper" }
+redis-helper = { path = "../common/redis-helper" }
