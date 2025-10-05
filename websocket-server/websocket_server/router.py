@@ -6,14 +6,15 @@ from fastapi import (APIRouter, Depends, Query, Response, WebSocket,
                      WebSocketDisconnect)
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from websocket_server.config import settings
-from websocket_server.services.message_handler import MessageHandler
-from websocket_server.services.websocket_manager import websocket_manager
+from websocket_server.handlers.message_handler import MessageHandler
+from websocket_server.handlers.websocket_handler import WebSocketHandler
 from websocket_server.util import generate_token, valid_user_with_token
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 message_handler = MessageHandler()
+websocket_handler = WebSocketHandler()
 
 
 @router.websocket("/ws")
@@ -23,7 +24,7 @@ async def websocket_endpoint(
     try:
         if not userid:
             raise WebSocketDisconnect(code=1008, reason="invalid_token")
-        await websocket_manager.connect(websocket, userid)
+        await websocket_handler.connect(websocket, userid)
         while True:
             start_time = time.time()
             data = await websocket.receive_json()
@@ -45,7 +46,7 @@ async def websocket_endpoint(
             logger.info("WebSocket disconnected due to invalid token for user")
             await websocket.close(code=1008)
         else:
-            await websocket_manager.disconnect(websocket, userid, reason="client_disconnected")
+            await websocket_handler.disconnect(websocket, userid, reason="client_disconnected")
     except Exception as e:
         logger.error(
             f"WebSocket error {str(e)}",
@@ -54,7 +55,7 @@ async def websocket_endpoint(
         metrics.websocket_message_errors_total.labels(
             server_id=settings.server_id, error_type="exception"
         ).inc()
-        await websocket_manager.disconnect(websocket, userid, reason="error")
+        await websocket_handler.disconnect(websocket, userid, reason="error")
 
 
 @router.get("/health")
@@ -64,9 +65,9 @@ async def health_check():
         "status": "healthy",
         "service": "websocket-server",
         "server_id": settings.server_id,
-        "active_users": len(websocket_manager.active_connections),
+        "active_users": len(websocket_handler.active_connections),
         "total_connections": sum(
-            len(conns) for conns in websocket_manager.active_connections.values()
+            len(conns) for conns in websocket_handler.active_connections.values()
         ),
     }
 

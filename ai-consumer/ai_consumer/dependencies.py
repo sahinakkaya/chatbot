@@ -8,8 +8,12 @@ from ai_consumer.config import settings
 from kafka_helper import KafkaHelper
 from logger import correlation_id_var
 from openai import OpenAI
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +55,7 @@ class AIConsumer:
                 "userid": message.get("userid"),
                 "timestamp": datetime.utcnow().isoformat(),
                 "processing_time_ms": int(processing_time * 1000),
-                "correlation_id": correlation_id
+                "correlation_id": correlation_id,
             }
 
             self.kafka_helper.publish(settings.produce_topic, response_message)
@@ -153,7 +157,6 @@ class AIConsumer:
         assert self.kafka_helper.consumer is not None, "Kafka consumer not initialized"
         try:
             for message in self.kafka_helper.consumer:
-                # Set correlation ID in context for this message
                 msg_correlation_id = message.value.get("correlation_id", "-")
                 correlation_id_var.set(msg_correlation_id)
 

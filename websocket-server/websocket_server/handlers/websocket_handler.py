@@ -12,8 +12,7 @@ from websocket_server.util import redis_helper
 logger = logging.getLogger(__name__)
 
 
-
-class WebSocketManager:
+class WebSocketHandler:
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
 
@@ -21,10 +20,8 @@ class WebSocketManager:
         logger.info(f"userid is {user_id}")
         await websocket.accept()
 
-        is_first_connection = False
         if user_id not in self.active_connections:
             self.active_connections[user_id] = set()
-            is_first_connection = True
             channel = f"user:{user_id}"
             message_handler = partial(self.broadcast, channel)
             await redis_helper.subscribe(channel, message_handler)
@@ -42,16 +39,13 @@ class WebSocketManager:
         logger.info(
             f"WebSocket connected: server_id={settings.server_id}, {user_id=} total_connections_of_user={len(self.active_connections[user_id])}"
         )
-        return is_first_connection
 
     async def disconnect(
         self, websocket: WebSocket, user_id: str, reason: str = "normal"
     ):
-        is_last_connection = False
         if user_id in self.active_connections:
             self.active_connections[user_id].discard(websocket)
             if not self.active_connections[user_id]:
-                is_last_connection = True
                 del self.active_connections[user_id]
 
                 await redis_helper.unsubscribe(user_id)
@@ -70,13 +64,11 @@ class WebSocketManager:
         logger.info(
             f"WebSocket disconnected: server_id={settings.server_id}, {user_id=} total_connections_of_user={len(self.active_connections.get(user_id, []))}"
         )
-        return is_last_connection
 
     async def broadcast(self, channel: str, message: dict):
-
         data = json.loads(message["data"])
 
-        correlation_id_var.set(data['correlation_id'])
+        correlation_id_var.set(data["correlation_id"])
         logger.info(f"Broadcasting message to channel {channel}: {message}")
         user_id = channel.split(":")[1]
 
@@ -86,5 +78,3 @@ class WebSocketManager:
                 metrics.websocket_messages_sent_total.labels(
                     server_id=settings.server_id, userid=user_id
                 ).inc()
-
-websocket_manager = WebSocketManager()
