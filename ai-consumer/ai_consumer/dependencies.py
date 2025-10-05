@@ -1,7 +1,7 @@
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import UTC, datetime
 
 import metrics.ai_consumer as metrics
 from ai_consumer.config import settings
@@ -53,7 +53,7 @@ class AIConsumer:
                 "type": "response",
                 "content": ai_response,
                 "userid": message.get("userid"),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "processing_time_ms": int(processing_time * 1000),
                 "correlation_id": correlation_id,
             }

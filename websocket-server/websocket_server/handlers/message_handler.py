@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 import metrics.websocket as metrics
 from asgi_correlation_id import correlation_id
@@ -51,7 +51,7 @@ class MessageHandler:
             "type": "message",
             "content": data["content"],
             "userid": userid,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "server_id": settings.server_id,
             "correlation_id": correlation_id.get(),
         }

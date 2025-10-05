@@ -13,6 +13,13 @@ dependencies = [
     "kafka-helper",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+]
+
+
 [tool.uv.sources]
 metrics = { path = "../common/metrics" }
 kafka-helper = { path = "../common/kafka-helper" }
