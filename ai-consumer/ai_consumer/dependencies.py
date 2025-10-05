@@ -70,8 +70,8 @@ class AIConsumer:
 
     @retry(
         retry=retry_if_exception_type((Exception,)),
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=4),
+        stop=stop_after_attempt(7),
+        wait=wait_exponential(),
         reraise=True,
         before_sleep=lambda retry_state: metrics.ai_consumer_openai_retries_total.labels(
             attempt=str(retry_state.attempt_number)
@@ -81,7 +81,7 @@ class AIConsumer:
         model = "gpt-3.5-turbo"
         start_time = time.time()
         time.sleep(0.2)
-        return "asdfasf"
+        # return "asdfasf"
 
         try:
             response = self.openai_client.chat.completions.create(

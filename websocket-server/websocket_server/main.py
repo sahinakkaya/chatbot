@@ -89,8 +89,8 @@ async def health_check():
         "status": "healthy",
         "service": "websocket-server",
         "server_id": settings.server_id,
-        "active_users": len(conn_manager.active_connections),
-        "total_connections": sum(len(conns) for conns in conn_manager.active_connections.values())
+        "active_users": len(conn_manager.ws_manager.active_connections),
+        "total_connections": sum(len(conns) for conns in conn_manager.ws_manager.active_connections.values())
     }
 
 @app.get("/")
