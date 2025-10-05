@@ -1,5 +1,5 @@
 """Prometheus metrics for Message Relay"""
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 
 # Performance Goal: Process 100+ messages per second throughput
 message_relay_messages_received_total = Counter(

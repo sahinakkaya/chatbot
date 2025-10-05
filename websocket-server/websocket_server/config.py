@@ -1,4 +1,5 @@
 from typing import Sequence
+
 from pydantic_settings import BaseSettings
 
 

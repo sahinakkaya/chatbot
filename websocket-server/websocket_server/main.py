@@ -1,11 +1,11 @@
 import logging
+
+from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from websocket_server.router import router
 from websocket_server.config import settings
-from asgi_correlation_id import CorrelationIdMiddleware
-
 from websocket_server.middleware import lifespan
+from websocket_server.router import router
 
 logger = logging.getLogger(__name__)
 

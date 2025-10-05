@@ -1,6 +1,7 @@
-import logging
 import json
-from kafka import KafkaProducer, KafkaConsumer
+import logging
+
+from kafka import KafkaConsumer, KafkaProducer
 
 logger = logging.getLogger(__name__)
 

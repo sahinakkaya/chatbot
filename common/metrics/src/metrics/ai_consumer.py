@@ -1,5 +1,5 @@
 """Prometheus metrics for AI Consumer"""
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 
 # Performance Goal: Process 100+ messages per second
 ai_consumer_messages_received_total = Counter(

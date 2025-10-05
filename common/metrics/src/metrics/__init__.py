@@ -1,6 +1,4 @@
 """Common Prometheus metrics definitions for all services"""
-from . import websocket
-from . import ai_consumer
-from . import message_relay
+from . import ai_consumer, message_relay, websocket
 
 __all__ = ['websocket', 'ai_consumer', 'message_relay']

@@ -1,11 +1,12 @@
-import logging
 import json
-from fastapi import WebSocket
+import logging
 from functools import partial
 from typing import Dict, Set
-from websocket_server.config import settings
+
 import metrics.websocket as metrics
+from fastapi import WebSocket
 from logger import correlation_id_var
+from websocket_server.config import settings
 from websocket_server.util import redis_helper
 
 logger = logging.getLogger(__name__)

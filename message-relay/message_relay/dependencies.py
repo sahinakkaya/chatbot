@@ -1,13 +1,13 @@
 import json
-from redis_helper import RedisHelper
-from kafka_helper import KafkaHelper
-import redis
-from message_relay.config import settings
-import time
-import metrics.message_relay as metrics
-from logger import correlation_id_var
-
 import logging
+import time
+
+import metrics.message_relay as metrics
+import redis
+from kafka_helper import KafkaHelper
+from logger import correlation_id_var
+from message_relay.config import settings
+from redis_helper import RedisHelper
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,11 @@
 import logging
 import secrets
-from fastapi import Query
-import metrics.websocket as metrics
-from websocket_server.config import settings
 
-from redis_helper import RedisHelper
+import metrics.websocket as metrics
+from fastapi import Query
 from kafka_helper import KafkaHelper
+from redis_helper import RedisHelper
+from websocket_server.config import settings
 
 logger = logging.getLogger(__name__)
 

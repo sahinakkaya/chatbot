@@ -1,19 +1,15 @@
-from datetime import datetime
+import logging
 import time
-from openai import OpenAI
-from ai_consumer.config import settings
 from concurrent.futures import ThreadPoolExecutor
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+from datetime import datetime
+
 import metrics.ai_consumer as metrics
+from ai_consumer.config import settings
 from kafka_helper import KafkaHelper
 from logger import correlation_id_var
-
-import logging
+from openai import OpenAI
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 logger = logging.getLogger(__name__)
 

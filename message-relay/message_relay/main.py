@@ -1,9 +1,11 @@
-import logging
 import asyncio
+import logging
+
 from logger import setup_logger
 from message_relay.config import settings
 from message_relay.dependencies import MessageRelayService
 from prometheus_client import start_http_server
+
 
 async def main():
     setup_logger(settings, use_asgi_correlation_id=False)

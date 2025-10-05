@@ -2,12 +2,13 @@
 Load test script for WebSocket server
 Tests concurrent connections and message throughput
 """
-import sys
 import asyncio
-import websockets
 import json
+import sys
 import time
 from datetime import datetime
+
+import websockets
 
 configurations = {
     0: (5, 1),

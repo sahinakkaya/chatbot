@@ -1,10 +1,11 @@
-from fastapi import Depends, WebSocket, Query, Response, APIRouter, WebSocketDisconnect
-import time
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 import logging
-import metrics.websocket as metrics
-from websocket_server.config import settings
+import time
 
+import metrics.websocket as metrics
+from fastapi import (APIRouter, Depends, Query, Response, WebSocket,
+                     WebSocketDisconnect)
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from websocket_server.config import settings
 from websocket_server.services.message_handler import MessageHandler
 from websocket_server.services.websocket_manager import websocket_manager
 from websocket_server.util import generate_token, valid_user_with_token

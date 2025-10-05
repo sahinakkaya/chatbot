@@ -1,6 +1,6 @@
-from logging.config import dictConfig
 import logging
 from contextvars import ContextVar
+from logging.config import dictConfig
 
 # List of packages to configure logging for
 packages = ["websocket_server", "kafka", "uvicorn"]

@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
-from asgi_correlation_id import correlation_id
+
 import metrics.websocket as metrics
+from asgi_correlation_id import correlation_id
 from websocket_server.config import settings
-from websocket_server.util import check_rate_limit
-from websocket_server.util import kafka_helper
+from websocket_server.util import check_rate_limit, kafka_helper
 
 logger = logging.getLogger(__name__)
 
