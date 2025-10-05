@@ -11,6 +11,7 @@ from tenacity import (
 )
 import metrics.ai_consumer as metrics
 from kafka_helper import KafkaHelper
+from logger import correlation_id_var
 
 import logging
 
@@ -41,6 +42,9 @@ class AIConsumer:
         content = message.get("content")
         start_time = time.time()
 
+        correlation_id = message.get("correlation_id", "-")
+        correlation_id_var.set(correlation_id)
+
         try:
             ai_response = self.process_with_openai(content)
             processing_time = time.time() - start_time
@@ -51,6 +55,7 @@ class AIConsumer:
                 "userid": message.get("userid"),
                 "timestamp": datetime.utcnow().isoformat(),
                 "processing_time_ms": int(processing_time * 1000),
+                "correlation_id": correlation_id
             }
 
             self.kafka_helper.publish(settings.produce_topic, response_message)
@@ -152,6 +157,10 @@ class AIConsumer:
         assert self.kafka_helper.consumer is not None, "Kafka consumer not initialized"
         try:
             for message in self.kafka_helper.consumer:
+                # Set correlation ID in context for this message
+                msg_correlation_id = message.value.get("correlation_id", "-")
+                correlation_id_var.set(msg_correlation_id)
+
                 logger.info(f"Received message: {message.value}")
 
                 # Update metrics

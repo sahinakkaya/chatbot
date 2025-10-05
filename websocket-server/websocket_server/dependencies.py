@@ -1,5 +1,7 @@
 import logging
 
+import secrets
+
 import redis.asyncio as redis
 import redis.asyncio.client as redis_client
 from fastapi import WebSocket
@@ -30,6 +32,31 @@ class ConnectionManager:
                 "max_block_ms": 5000,
             }
         )
+
+    async def validate_token(self, token: str, userid: str) -> bool:
+        stored_userid = await self.redis_helper.get(f"token:{token}")
+        return stored_userid == userid
+
+    async def generate_token(self, userid: str, ttl: int = 3600) -> str:
+        token = secrets.token_urlsafe(32)
+        await self.redis_helper.set(f"token:{token}", userid, ttl)
+        logger.info(f"Generated token for userid={userid}, ttl={ttl}s")
+        return token
+
+    async def check_rate_limit(self, userid: str, max_requests: int = 10, window_seconds: int = 60) -> bool:
+        key = f"rate_limit:{userid}"
+        current = await self.redis_helper.get(key)
+
+        if current is None:
+            await self.redis_helper.set(key, "1", window_seconds)
+            return True
+
+        count = int(current)
+        if count >= max_requests:
+            return False
+
+        await self.redis_helper.incr(key)
+        return True
 
     async def teardown(self):
         await self.redis_helper.teardown()

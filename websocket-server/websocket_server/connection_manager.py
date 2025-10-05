@@ -4,6 +4,7 @@ from fastapi import WebSocket
 from typing import Dict, Set
 from websocket_server.config import settings
 import metrics.websocket as metrics
+from logger import correlation_id_var
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +64,15 @@ class WebSocketConnectionManager:
         return is_last_connection
 
     async def broadcast(self, channel: str, message: dict):
+
+        data = json.loads(message["data"])
+
+        correlation_id_var.set(data['correlation_id'])
         logger.info(f"Broadcasting message to channel {channel}: {message}")
         user_id = channel.split(":")[1]
 
         if user_id in self.active_connections:
             for connection in self.active_connections[user_id]:
-                data = json.loads(message["data"])
                 await connection.send_json(data)
                 metrics.websocket_messages_sent_total.labels(
                     server_id=settings.server_id, userid=user_id

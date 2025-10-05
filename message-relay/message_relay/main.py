@@ -6,7 +6,7 @@ from message_relay.dependencies import MessageRelayService
 from prometheus_client import start_http_server
 
 async def main():
-    setup_logger(settings)
+    setup_logger(settings, use_asgi_correlation_id=False)
     logger = logging.getLogger(__name__)
 
     # Start Prometheus metrics HTTP server

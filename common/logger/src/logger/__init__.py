@@ -1,21 +1,33 @@
 from logging.config import dictConfig
-
+import logging
+from contextvars import ContextVar
 
 # List of packages to configure logging for
 packages = ["websocket_server", "kafka", "uvicorn"]
 
+# Context variable for correlation ID in non-ASGI services
+correlation_id_var: ContextVar[str] = ContextVar("correlation_id", default="-")
 
-def setup_logger(settings):
+
+class CorrelationIdFilter(logging.Filter):
+    """Custom filter for non-ASGI services to inject correlation_id from context"""
+
+    def filter(self, record):
+        record.correlation_id = correlation_id_var.get()
+        return True
+
+
+def setup_logger(settings, use_asgi_correlation_id=True):
     dictConfig(
         {
             "version": 1,
             "disable_existing_loggers": False,
             "filters": {
                 "correlation_id": {
-                    "()": "asgi_correlation_id.CorrelationIdFilter",
+                    "()": "asgi_correlation_id.CorrelationIdFilter" if use_asgi_correlation_id else "logger.CorrelationIdFilter",
                     "uuid_length": 16,
-                    "default_value": " ",
-                },
+                    "default_value": "-",
+                }             
             },
             "formatters": {
                 "console": {

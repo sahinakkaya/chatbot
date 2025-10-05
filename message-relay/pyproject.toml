@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-logger = { path = "../common/logger" }
 metrics = { path = "../common/metrics" }
 kafka-helper = { path = "../common/kafka-helper" }
 redis-helper = { path = "../common/redis-helper" }
+logger = { path = "../common/logger" }

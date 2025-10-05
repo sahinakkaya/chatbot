@@ -5,6 +5,7 @@ import redis
 from message_relay.config import settings
 import time
 import metrics.message_relay as metrics
+from logger import correlation_id_var
 
 import logging
 
@@ -28,6 +29,10 @@ class MessageRelayService:
         assert self.kafka_helper.consumer is not None, "Kafka consumer is not initialized"
         try:
             for message in self.kafka_helper.consumer:
+                # Set correlation ID in context for this message
+                msg_correlation_id = message.value.get("correlation_id", "-")
+                correlation_id_var.set(msg_correlation_id)
+
                 logger.info(f"Received message: {message.value}")
 
                 # Update metrics

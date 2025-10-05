@@ -37,6 +37,22 @@ class RedisHelper:
         if self.redis_client is None:
             raise RuntimeError("Redis client not initialized")
         await self.redis_client.publish(channel, message)
+    
+    async def get(self, key: str) -> str | None:
+        if self.redis_client is None:
+            raise RuntimeError("Redis client not initialized")
+        return await self.redis_client.get(key)
+
+    async def set(self, key: str, value: str, ex: int | None = None):
+        if self.redis_client is None:
+            raise RuntimeError("Redis client not initialized")
+        await self.redis_client.set(key, value, ex=ex)
+
+    async def incr(self, key: str) -> int:
+        if self.redis_client is None:
+            raise RuntimeError("Redis client not initialized")
+        return await self.redis_client.incr(key)
+
 
     async def teardown(self):
         if self.pubsub:
