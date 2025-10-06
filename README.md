@@ -63,8 +63,6 @@ Client → Nginx → WebSocket Server (2 instances) → Kafka (incoming_messages
 ### 1. Environment Setup
 You don't need to do anything else if you just want to run with docker. If you want to run locally, copy `.env.example` files to `.env` and change it based on your needs. You will need python3.13+ and [`uv`](https://docs.astral.sh/uv/)
 
-```
-
 ### 2. Start Services
 
 ```bash
