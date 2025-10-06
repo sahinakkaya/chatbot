@@ -57,7 +57,7 @@ class RedisHelper:
 
     async def teardown(self):
         if self.pubsub:
-            await self.pubsub.close()
+            await self.pubsub.aclose()
             logger.info(f"Redis pubsub closed for {self.settings.app_name}")
         if self.redis_client:
             await self.redis_client.aclose()

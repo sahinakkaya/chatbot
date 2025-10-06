@@ -1,10 +1,11 @@
+import asyncio
+
 import pytest
 import pytest_asyncio
-import asyncio
 from fastapi.testclient import TestClient
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from websocket_server.main import app
-from websocket_server.util import redis_helper, kafka_helper
+from websocket_server.util import kafka_helper, redis_helper
 
 
 @pytest.fixture(scope="session")

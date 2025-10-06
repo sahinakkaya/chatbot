@@ -6,9 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from websocket_server.config import settings
 from websocket_server.handlers.exception_handler import (
-    general_exception_handler,
-    validation_exception_handler,
-)
+    general_exception_handler, validation_exception_handler)
 from websocket_server.middleware import lifespan
 from websocket_server.router import router
 

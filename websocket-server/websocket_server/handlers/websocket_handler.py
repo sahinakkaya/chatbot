@@ -1,6 +1,6 @@
 import json
-import time
 import logging
+import time
 from functools import partial
 from typing import Dict, Set
 
@@ -8,11 +8,9 @@ import metrics.websocket as metrics
 from fastapi import WebSocket
 from logger import correlation_id_var
 from websocket_server.config import settings
+from websocket_server.handlers.message_handler import (MessageHandler,
+                                                       MessageHandlerError)
 from websocket_server.util import redis_helper
-from websocket_server.handlers.message_handler import (
-    MessageHandler,
-    MessageHandlerError,
-)
 
 logger = logging.getLogger(__name__)
 

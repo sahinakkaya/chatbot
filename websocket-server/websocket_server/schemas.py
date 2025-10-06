@@ -1,8 +1,8 @@
-from datetime import UTC, datetime
-from pydantic import BaseModel, Field, field_validator
 import re
-from pydantic import BaseModel, Field
+from datetime import UTC, datetime
 from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class UserId(BaseModel):

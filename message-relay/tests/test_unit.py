@@ -1,6 +1,7 @@
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from message_relay.dependencies import MessageRelayService
 
 

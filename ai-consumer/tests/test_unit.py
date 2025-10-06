@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import MagicMock, patch, Mock
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from ai_consumer.dependencies import AIConsumer
 
 

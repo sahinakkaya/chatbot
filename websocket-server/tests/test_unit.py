@@ -1,9 +1,11 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 from websocket_server.handlers.message_handler import MessageHandler
 from websocket_server.handlers.websocket_handler import WebSocketHandler
-from websocket_server.util import check_rate_limit, validate_token, generate_token
+from websocket_server.util import (check_rate_limit, generate_token,
+                                   validate_token)
 
 
 class TestMessageHandler:

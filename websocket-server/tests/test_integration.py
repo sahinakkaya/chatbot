@@ -1,7 +1,8 @@
-import pytest
 import json
-from websocket_server.util import redis_helper
+
+import pytest
 from websocket_server.config import settings
+from websocket_server.util import redis_helper
 
 
 class TestTokenEndpoint:
