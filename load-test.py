@@ -28,7 +28,7 @@ conf = configurations[int(sys.argv[1])]
 WEBSOCKET_URL = "ws://localhost:8080/ws"
 NUM_CLIENTS = conf[0]  # Test with 150 concurrent connections
 MESSAGES_PER_CLIENT = conf[1]
-TOKEN = "test-token"
+TOKEN = "sr6IqwuvN_ciTM_LG2i7OE8PtOJNkMkgdLuTyS4aACk"
 
 class LoadTestClient:
     def __init__(self, client_id):
