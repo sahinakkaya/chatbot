@@ -147,9 +147,28 @@
             background: #c82333;
         }
 
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .token-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .token-group input {
+            flex: 1;
         }
 
         .chat-panel {
@@ -298,7 +317,10 @@
                 </div>
                 <div class="form-group">
                     <label for="token">Token:</label>
-                    <input type="text" id="token" value="test-token" placeholder="test-token">
+                    <div class="token-group">
+                        <input type="text" id="token" value="" placeholder="Click 'Get Token' to fetch">
+                        <button class="btn btn-success" id="getTokenBtn" onclick="getToken()">Get Token</button>
+                    </div>
                 </div>
             </div>
 
@@ -332,6 +354,47 @@
     <script>
         let ws = null;
         let messageCount = 0;
+
+        async function getToken() {
+            const userId = document.getElementById('userId').value;
+            const getTokenBtn = document.getElementById('getTokenBtn');
+
+            if (!userId) {
+                alert('Please enter a User ID first');
+                return;
+            }
+
+            // Disable button and show loading state
+            getTokenBtn.disabled = true;
+            getTokenBtn.textContent = 'Getting...';
+
+            try {
+                const response = await fetch(`http://localhost:8080/token?userid=${encodeURIComponent(userId)}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.token) {
+                    document.getElementById('token').value = data.token;
+                    addMessage('system', `✅ Token retrieved successfully for user: ${userId}`);
+                } else {
+                    throw new Error('No token in response');
+                }
+            } catch (error) {
+                console.error('Failed to get token:', error);
+                addMessage('error', `Failed to get token: ${error.message}`);
+                alert(`Failed to get token: ${error.message}`);
+            } finally {
+                // Re-enable button
+                getTokenBtn.disabled = false;
+                getTokenBtn.textContent = 'Get Token';
+            }
+        }
 
         function addMessage(type, content, metadata = {}) {
             const chatPanel = document.getElementById('chatPanel');

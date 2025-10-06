@@ -57,13 +57,11 @@ Client → Nginx → WebSocket Server (2 instances) → Kafka (incoming_messages
 ## Prerequisites
 
 - Docker and Docker Compose
-- Python 3.13+ (for local development)
-- OpenAI API key
 
 ## Quick Start
 
 ### 1. Environment Setup
-You don't need to do anything else if you just want to run with docker. If you want to run locally, copy `.env.example` files to `.env` and change based on your needs.
+You don't need to do anything else if you just want to run with docker. If you want to run locally, copy `.env.example` files to `.env` and change it based on your needs. You will need python3.13+ and [`uv`](https://docs.astral.sh/uv/)
 
 ```
 
@@ -79,7 +77,7 @@ make start-backend        # WebSocket servers, AI Consumer, Message Relay,
 make start-monitoring     # Prometheus, Grafana
 ```
 ### 3. Use the App
-There is an endpoint in websocket-server in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. 
+The websocket server will be running on `8080` by default. There is an endpoint in websocket-server in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. 
 
 Notice: Some part of this application is completely vibe coded with AI. These are:
 - Metrics
@@ -88,11 +86,3 @@ Notice: Some part of this application is completely vibe coded with AI. These ar
 
 Whenever you see a metric registered, you can assume I didn't wrote that line. Whenever you see a test case, you can assume I didn't wrote it.
 ```
-
-## License
-
-This project is for interview demonstration purposes.
-
-## Contact
-
-For questions or issues, please contact the development team.
