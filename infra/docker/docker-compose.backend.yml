@@ -1,13 +1,13 @@
 services:
   websocket-server-1:
     build:
-      context: ../../
+      context: ../../src/
       dockerfile: ./websocket-server/Dockerfile
 
     image: websocket-server
     container_name: ws-server-1
     env_file:
-      - ../../websocket-server/.env.example
+      - ../../src/websocket-server/.env.example
     environment:
       SERVER_ID: "server_1"
       APP_NAME: "ws-server-1"
@@ -39,16 +39,16 @@ services:
   # WebSocket Server Instance 2
   websocket-server-2:
     build:
-      context: ../../
+      context: ../../src/
       dockerfile: ./websocket-server/Dockerfile
     container_name: ws-server-2
     env_file:
-      - ../../websocket-server/.env.example
+      - ../../src/websocket-server/.env.example
     environment:
       SERVER_ID: "server_2"
       APP_NAME: "ws-server-2"
     volumes:
-      - ../../docker-logs:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -75,13 +75,13 @@ services:
   # AI Consumer Service
   ai-consumer:
     build:
-      context: ../../
+      context: ../../src/
       dockerfile: ./ai-consumer/Dockerfile
     container_name: ai-consumer
     env_file:
-      - ../../ai-consumer/.env.example
+      - ../../src/ai-consumer/.env.example
     volumes:
-      - ../../docker-logs:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -94,13 +94,13 @@ services:
   # Message Relay Service
   message-relay:
     build:
-      context: ../../
+      context: ../../src/
       dockerfile: ./message-relay/Dockerfile
     container_name: message-relay
     env_file:
-      - ../../message-relay/.env.example
+      - ../../src/message-relay/.env.example
     volumes:
-      - ../../docker-logs:/var/log/nova-prime
+      - ./docker-logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
