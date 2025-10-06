@@ -6,10 +6,10 @@ A distributed microservices architecture for real-time AI conversations using We
 
 ```
 Client → Nginx → WebSocket Server (2 instances) → Kafka (incoming_messages)
-                      ↑                                      ↓
-                      |                                AI Consumer → OpenAI API
-                      |                                      ↓
-                  Redis ← Message Relay ← Kafka (responses)
+                                       ↑                     ↓
+                                       |               AI Consumer → OpenAI API
+                                       |                                ↓
+                                      Redis ← Message Relay ← Kafka (responses)
 ```
 
 ## Tech Stack
