@@ -26,7 +26,7 @@ class MessageHandler:
         return is_allowed
 
     async def process_message(self, raw_data: dict, userid: str) -> dict | None:
-        """Process incoming message and return error if any"""
+        """Process incoming message and raise MessageHandlerError on failure"""
         metrics.websocket_messages_received_total.labels(
             server_id=settings.server_id, userid=userid
         ).inc()
