@@ -80,13 +80,13 @@ cd infra/docker
 docker compose -f docker-compose.dependencies.yml -f docker-compose.backend.ghcr.yml -f docker-compose.monitoring.yml up -d
 ```
 ### 3. Use the App
-The nginx load balancer will be running on `8080` by default. All the requests made are proxied to websocket-server. There is an endpoint in websocket-server in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. You can visit http://localhost:8080/ in order to quickly test it via simple ui.
+The nginx load balancer will be running on `8080` by default. All the requests made are proxied to `websocket-server`. There is an endpoint in `websocket-server` in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. You can visit http://localhost:8080/ in order to quickly test it via simple ui.
 
 ### 4. Some notes
-- I've decided to use prometheus for metrics but didn't touch anything else. All the code related with metrics are written by claude. It is supposed to track the performance criteria we are interested in but doesn't work well. Prometheus and grafana is also setup by claude. Grafana is running at `3000` with default credentials (admin, admin). You will need to import dashboard from `./infra/grafana/dashboards/nova-prime-dashboard.json` if you want to see the dashboard.
+- I've decided to use prometheus for metrics but didn't touch anything else. All the code related with metrics are written by Claude. It is supposed to track the performance criteria we are interested in but doesn't work well. Prometheus and grafana is also setup by Claude. Grafana is running at `3000` with default credentials (admin, admin). You will need to import dashboard from `./infra/grafana/dashboards/nova-prime-dashboard.json` if you want to see the dashboard.
 
-- I've used `./scripts/load-test.py` for testing the application under different loads. I've achieved 100+ message throughput multiple times but it really depends on responsiveness of OpenAI. I am getting 50+ message/second throughput on average.
+- I've used `./scripts/load-test.py` for testing the application under different loads. I've achieved 100+ message throughput multiple times but it really depends on responsiveness of OpenAI. I am getting 50+ messages/second throughput on average.
 
-- All the code related to testing is also vibe coded with claude. It is better than nothing I guess.
+- All the code related to testing is also vibe coded with Claude. It is better than nothing I guess.
 
 - Please don't abuse my OpenAI key. There is $5 balance in my account. I don't know if it can go negative.
