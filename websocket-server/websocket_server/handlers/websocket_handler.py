@@ -9,7 +9,10 @@ from fastapi import WebSocket
 from logger import correlation_id_var
 from websocket_server.config import settings
 from websocket_server.util import redis_helper
-from websocket_server.handlers.message_handler import MessageHandler, MessageHandlerError
+from websocket_server.handlers.message_handler import (
+    MessageHandler,
+    MessageHandlerError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,7 @@ class WebSocketHandler:
                 await message_handler.process_message(data, userid)
             except MessageHandlerError as e:
                 logger.warning(f"Message handler error for user {userid}: {str(e)}")
-                await websocket.send_json({"message": str(e), "type": "error" })
+                await websocket.send_json({"message": str(e), "type": "error"})
 
             # Record message processing duration
             duration = time.time() - start_time
