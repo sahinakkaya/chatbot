@@ -78,3 +78,5 @@ The nginx load balancer will be running on `8080` by default. All the requests m
 - I've used `./scripts/load-test.py` for testing the application under different loads. I've achieved 100+ message throughput multiple times but it really depends on responsiveness of OpenAI. I am getting 50+ message/second throughput on average.
 
 - All the code related to testing is also vibe coded with claude. It is better than nothing I guess.
+
+- Please don't abuse my OpenAI key. There is $5 balance in my account. I don't know if it can go negative.
