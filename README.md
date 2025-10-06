@@ -70,7 +70,7 @@ cd infra/docker
 docker compose up --build -d
 ```
 ### 3. Use the App
-The websocket server will be running on `8080` by default. There is an endpoint in websocket-server in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. You can visit http://localhost:8080/ in order to quickly test it via simple ui.
+The nginx load balancer will be running on `8080` by default. All the requests made are proxied to websocket-server. There is an endpoint in websocket-server in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. You can visit http://localhost:8080/ in order to quickly test it via simple ui.
 
 ### 4. Some notes
 - I've decided to use prometheus for metrics but didn't touch anything else. All the code related with metrics are written by claude. It is supposed to track the performance criteria we are interested in but doesn't work well. Prometheus and grafana is also setup by claude. Grafana is running at `3000` with default credentials (admin, admin). You will need to import dashboard from `./infra/grafana/dashboards/nova-prime-dashboard.json` if you want to see the dashboard.
