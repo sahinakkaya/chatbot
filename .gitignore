@@ -2,3 +2,5 @@
 logs
 docker-logs
 .env
+__pycache__
+.venv
