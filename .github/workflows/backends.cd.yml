@@ -1,0 +1,72 @@
+name: Backend CD
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron:  '38 19 * * *' # run the cron job every day at 19.38 
+  push:
+    branches:
+      - "main"
+    tags-ignore:
+      - "**"
+    paths:
+      - "src/**"
+      - ".github/workflows/**"
+      - ".github/actions/**"
+env:
+  REGISTRY: ghcr.io
+  REPO_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-and-push-websocket-server:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push websocket-server
+        uses: ./.github/actions/build-push-image
+        with:
+          service-name: websocket-server
+          registry: ${{ env.REGISTRY }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/nova-prime-websocket-server
+
+  build-and-push-ai-consumer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push ai-consumer
+        uses: ./.github/actions/build-push-image
+        with:
+          service-name: ai-consumer
+          registry: ${{ env.REGISTRY }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/nova-prime-ai-consumer
+
+  build-and-push-message-relay:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push message-relay
+        uses: ./.github/actions/build-push-image
+        with:
+          service-name: message-relay
+          registry: ${{ env.REGISTRY }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/nova-prime-message-relay

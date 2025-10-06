@@ -1,0 +1,44 @@
+name: 'Build and Push Docker Image'
+description: 'Build and push a Docker image to GitHub Container Registry'
+inputs:
+  service-name:
+    description: 'Name of the service (ai-consumer, message-relay, websocket-server)'
+    required: true
+  registry:
+    description: 'Container registry URL'
+    required: true
+    default: 'ghcr.io'
+  registry-username:
+    description: 'Registry username'
+    required: true
+  registry-password:
+    description: 'Registry password/token'
+    required: true
+  image-name:
+    description: 'Full image name (e.g., ghcr.io/owner/repo-service-name)'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-username }}
+        password: ${{ inputs.registry-password }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ inputs.image-name }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: src
+        file: src/${{ inputs.service-name }}/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
