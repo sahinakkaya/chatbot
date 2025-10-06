@@ -26,12 +26,12 @@ class RedisHelper:
             raise RuntimeError("PubSub not initialized")
         await self.pubsub.subscribe(**{channel: message_handler})
 
-    async def unsubscribe(self, user_id: str):
+    async def unsubscribe(self, channel: str):
         if self.pubsub is None:
             raise RuntimeError("PubSub not initialized")
-        await self.pubsub.unsubscribe(f"user:{user_id}")
+        await self.pubsub.unsubscribe(channel)
         logger.info(
-            f"Unsubscribed from Redis channel server_id={self.settings.server_id}, user_id={user_id}"
+            f"Unsubscribed from Redis channel channel={channel}"
         )
 
     async def publish(self, channel: str, message: str):

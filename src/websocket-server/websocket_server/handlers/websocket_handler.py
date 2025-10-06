@@ -69,8 +69,8 @@ class WebSocketHandler:
             self.active_connections[user_id].discard(websocket)
             if not self.active_connections[user_id]:
                 del self.active_connections[user_id]
-
-                await redis_helper.unsubscribe(user_id)
+                channel = f"user:{user_id}"
+                await redis_helper.unsubscribe(channel)
                 logger.info(f"All connections closed for user_id={user_id}")
 
         metrics.websocket_disconnections_total.labels(

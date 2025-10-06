@@ -182,7 +182,7 @@ class TestWebSocketHandler:
 
             assert userid not in ws_handler.active_connections
             # Should unsubscribe from Redis
-            mock_redis.unsubscribe.assert_called_once_with(userid)
+            mock_redis.unsubscribe.assert_called_once_with(f"user:{userid}")
 
     @pytest.mark.asyncio
     async def test_broadcast_message(self, ws_handler):
