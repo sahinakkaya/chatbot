@@ -8,9 +8,9 @@ scrape_configs:
     metrics_path: '/metrics/'
     static_configs:
       - targets:
-          # - 'websocket-server-1:8000'
-          # - 'websocket-server-2:8000'
-          - 'host.docker.internal:8000'
+          - 'websocket-server-1:8000'
+          - 'websocket-server-2:8000'
+          # - 'host.docker.internal:8000'
         labels:
           service: 'websocket-server'
 
@@ -19,8 +19,8 @@ scrape_configs:
     metrics_path: '/metrics/'
     static_configs:
       - targets:
-          # - 'ai-consumer:8000'
-          - 'host.docker.internal:8002'
+          - 'ai-consumer:8000'
+          # - 'host.docker.internal:8002'
         labels:
           service: 'ai-consumer'
 
@@ -29,7 +29,7 @@ scrape_configs:
     metrics_path: '/metrics/'
     static_configs:
       - targets:
-          # - 'message-relay:8001'
-          - 'host.docker.internal:8001'
+          - 'message-relay:8001'
+          # - 'host.docker.internal:8001'
         labels:
           service: 'message-relay'
