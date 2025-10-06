@@ -2,7 +2,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
-from websocket_server.handlers.message_handler import MessageHandler
+from websocket_server.handlers.message_handler import MessageHandler, MessageHandlerError
 from websocket_server.handlers.websocket_handler import WebSocketHandler
 from websocket_server.util import (check_rate_limit, generate_token,
                                    validate_token)
@@ -49,11 +49,10 @@ class TestMessageHandler:
             }
             userid = "testuser"
 
-            result = await message_handler.process_message(data, userid)
+            with pytest.raises(MessageHandlerError) as excinfo:
+                await message_handler.process_message(data, userid)
 
-            assert result is not None
-            assert result["type"] == "error"
-            assert "Invalid message format" in result["message"]
+                assert "Invalid message format" in str(excinfo.value)
 
     @pytest.mark.asyncio
     async def test_process_message_missing_content(self, message_handler):
@@ -64,11 +63,10 @@ class TestMessageHandler:
             }
             userid = "testuser"
 
-            result = await message_handler.process_message(data, userid)
+            with pytest.raises(MessageHandlerError) as excinfo:
+                await message_handler.process_message(data, userid)
 
-            assert result is not None
-            assert result["type"] == "error"
-            assert "Invalid message format" in result["message"]
+                assert "Invalid message format" in str(excinfo.value)
 
     @pytest.mark.asyncio
     async def test_process_message_rate_limited(self, message_handler):
@@ -80,11 +78,10 @@ class TestMessageHandler:
             }
             userid = "testuser"
 
-            result = await message_handler.process_message(data, userid)
+            with pytest.raises(MessageHandlerError) as excinfo:
+                await message_handler.process_message(data, userid)
 
-            assert result is not None
-            assert result["type"] == "error"
-            assert "Rate limit exceeded" in result["message"]
+                assert "Rate limit exceeded" in str(excinfo.value)
 
     @pytest.mark.asyncio
     async def test_check_rate_limit_allowed(self, message_handler):
@@ -236,18 +233,18 @@ class TestUtilFunctions:
     async def test_validate_token_valid(self):
         """Test validating a valid token"""
         with patch('websocket_server.util.redis_helper') as mock_redis:
-            mock_redis.get = AsyncMock(return_value="testuser")
+            mock_redis.get = AsyncMock(return_value="valid_token")
 
             result = await validate_token("valid_token", "testuser")
 
             assert result is True
-            mock_redis.get.assert_called_once_with("token:valid_token")
+            mock_redis.get.assert_called_once_with("token:testuser")
 
     @pytest.mark.asyncio
     async def test_validate_token_invalid(self):
         """Test validating an invalid token"""
         with patch('websocket_server.util.redis_helper') as mock_redis:
-            mock_redis.get = AsyncMock(return_value="otheruser")
+            mock_redis.get = AsyncMock(return_value="another_token")
 
             result = await validate_token("token", "testuser")
 
@@ -268,6 +265,7 @@ class TestUtilFunctions:
         """Test generating a new token"""
         with patch('websocket_server.util.redis_helper') as mock_redis:
             mock_redis.set = AsyncMock()
+            mock_redis.get = AsyncMock(return_value=None)
 
             token = await generate_token("testuser")
 
@@ -275,7 +273,7 @@ class TestUtilFunctions:
             mock_redis.set.assert_called_once()
             call_args = mock_redis.set.call_args[0]
             assert call_args[0].startswith("token:")
-            assert call_args[1] == "testuser"
+            assert call_args[1] == token
 
     @pytest.mark.asyncio
     async def test_check_rate_limit_first_request(self):

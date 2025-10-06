@@ -28,11 +28,11 @@ class TestTokenEndpoint:
         """Test that generated token is stored in Redis correctly"""
         response = await test_client.post("/token?userid=testuser456")
         data = response.json()
-        token = data["token"]
+        userid = data["userid"]
 
         # Verify token is stored in Redis
-        stored_userid = await redis_helper.get(f"token:{token}")
-        assert stored_userid == "testuser456"
+        stored_token = await redis_helper.get(f"token:{userid}")
+        assert stored_token == data["token"]
 
     @pytest.mark.asyncio
     async def test_health_endpoint(self, test_client):
