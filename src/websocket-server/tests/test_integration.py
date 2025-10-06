@@ -60,14 +60,18 @@ class TestWebSocketConnection:
         token = response.json()["token"]
 
         # Connect via WebSocket
-        with sync_client.websocket_connect(f"/ws?token={token}&userid=wsuser1") as websocket:
+        with sync_client.websocket_connect(
+            f"/ws?token={token}&userid=wsuser1"
+        ) as websocket:
             # Connection should be successful
             assert websocket is not None
 
     def test_websocket_connection_with_invalid_token(self, sync_client):
         """Test WebSocket connection with invalid token"""
         with pytest.raises(Exception):  # Should raise WebSocketDisconnect
-            with sync_client.websocket_connect(f"/ws?token=invalid_token&userid=wsuser2"):
+            with sync_client.websocket_connect(
+                f"/ws?token=invalid_token&userid=wsuser2"
+            ):
                 pass
 
     def test_websocket_send_receive_message(self, sync_client):
@@ -77,12 +81,14 @@ class TestWebSocketConnection:
         assert response.status_code == 200
         token = response.json()["token"]
 
-        with sync_client.websocket_connect(f"/ws?token={token}&userid=wsuser3") as websocket:
+        with sync_client.websocket_connect(
+            f"/ws?token={token}&userid=wsuser3"
+        ) as websocket:
             # Send a message
             test_message = {
                 "type": "message",
                 "content": "Hello, WebSocket!",
-                "userid": "wsuser3"
+                "userid": "wsuser3",
             }
             websocket.send_json(test_message)
 
@@ -101,7 +107,9 @@ class TestRateLimiting:
         assert response.status_code == 200
         token = response.json()["token"]
 
-        with sync_client.websocket_connect(f"/ws?token={token}&userid=ratelimit_user") as websocket:
+        with sync_client.websocket_connect(
+            f"/ws?token={token}&userid=ratelimit_user"
+        ) as websocket:
             # Send messages up to the rate limit
             max_requests = settings.user_rate_limit_max_requests
 
@@ -109,7 +117,7 @@ class TestRateLimiting:
                 message = {
                     "type": "message",
                     "content": f"Message {i}",
-                    "userid": "ratelimit_user"
+                    "userid": "ratelimit_user",
                 }
                 websocket.send_json(message)
 
@@ -117,7 +125,7 @@ class TestRateLimiting:
             rate_limited_message = {
                 "type": "message",
                 "content": "This should be rate limited",
-                "userid": "ratelimit_user"
+                "userid": "ratelimit_user",
             }
             websocket.send_json(rate_limited_message)
 
@@ -132,12 +140,14 @@ class TestRateLimiting:
         assert response.status_code == 200
         token = response.json()["token"]
 
-        with sync_client.websocket_connect(f"/ws?token={token}&userid=invalid_msg_user") as websocket:
+        with sync_client.websocket_connect(
+            f"/ws?token={token}&userid=invalid_msg_user"
+        ) as websocket:
             # Send invalid message (missing content)
             invalid_message = {
                 "type": "message",
                 # Missing "content" field
-                "userid": "invalid_msg_user"
+                "userid": "invalid_msg_user",
             }
             websocket.send_json(invalid_message)
 

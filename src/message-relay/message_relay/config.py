@@ -19,4 +19,5 @@ class Settings(BaseSettings):
     app_name: str = "message-relay"
     log_folder: str = "/var/log"
 
+
 settings = Settings()

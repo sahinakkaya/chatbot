@@ -30,15 +30,13 @@ class RedisHelper:
         if self.pubsub is None:
             raise RuntimeError("PubSub not initialized")
         await self.pubsub.unsubscribe(channel)
-        logger.info(
-            f"Unsubscribed from Redis channel channel={channel}"
-        )
+        logger.info(f"Unsubscribed from Redis channel channel={channel}")
 
     async def publish(self, channel: str, message: str):
         if self.redis_client is None:
             raise RuntimeError("Redis client not initialized")
         await self.redis_client.publish(channel, message)
-    
+
     async def get(self, key: str) -> str | None:
         if self.redis_client is None:
             raise RuntimeError("Redis client not initialized")
@@ -53,7 +51,6 @@ class RedisHelper:
         if self.redis_client is None:
             raise RuntimeError("Redis client not initialized")
         return await self.redis_client.incr(key)
-
 
     async def teardown(self):
         if self.pubsub:

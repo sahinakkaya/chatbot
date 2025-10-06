@@ -27,7 +27,9 @@ def setup_logger(settings, use_asgi_correlation_id=True):
                     "()": "asgi_correlation_id.CorrelationIdFilter",
                     "uuid_length": 16,
                     "default_value": "-",
-                } if use_asgi_correlation_id else {"()": "logger.CorrelationIdFilter"}
+                }
+                if use_asgi_correlation_id
+                else {"()": "logger.CorrelationIdFilter"}
             },
             "formatters": {
                 "console": {

@@ -23,7 +23,9 @@ async def test_client():
     await redis_helper.initialize()
     kafka_helper.initialize()
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         yield client
 
     # Cleanup for async tests

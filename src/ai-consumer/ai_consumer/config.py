@@ -4,7 +4,6 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     openai_api_key: str = ""
 
-
     # redis
     redis_host: str = "localhost"
     redis_port: int = 6379
@@ -24,5 +23,6 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     app_name: str = "ai-consumer"
     log_folder: str = "/var/log"
+
 
 settings = Settings()

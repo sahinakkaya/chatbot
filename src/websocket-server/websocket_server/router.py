@@ -2,14 +2,16 @@ import logging
 import time
 
 import metrics.websocket as metrics
-from fastapi import (APIRouter, Depends, Query, Response, WebSocket,
-                     WebSocketDisconnect)
+from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from websocket_server.config import settings
 from websocket_server.handlers.websocket_handler import WebSocketHandler
 from websocket_server.schemas import UserId
-from websocket_server.util import (generate_token, get_valid_user_id,
-                                   valid_user_with_token)
+from websocket_server.util import (
+    generate_token,
+    get_valid_user_id,
+    valid_user_with_token,
+)
 
 logger = logging.getLogger(__name__)
 

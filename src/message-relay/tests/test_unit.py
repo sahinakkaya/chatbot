@@ -11,15 +11,17 @@ class TestMessageRelayService:
     @pytest.fixture
     def mock_settings(self):
         """Mock settings for testing"""
-        with patch('message_relay.dependencies.settings') as mock_settings:
+        with patch("message_relay.dependencies.settings") as mock_settings:
             mock_settings.consume_topic = "responses"
             yield mock_settings
 
     @pytest.fixture
     def relay_service(self, mock_settings):
         """Create MessageRelayService instance with mocked dependencies"""
-        with patch('message_relay.dependencies.KafkaHelper'), \
-             patch('message_relay.dependencies.RedisHelper'):
+        with (
+            patch("message_relay.dependencies.KafkaHelper"),
+            patch("message_relay.dependencies.RedisHelper"),
+        ):
             service = MessageRelayService()
             service.kafka_helper = MagicMock()
             service.redis_helper = AsyncMock()
@@ -27,9 +29,10 @@ class TestMessageRelayService:
 
     def test_initialization(self, mock_settings):
         """Test MessageRelayService initialization"""
-        with patch('message_relay.dependencies.KafkaHelper') as mock_kafka, \
-             patch('message_relay.dependencies.RedisHelper') as mock_redis:
-
+        with (
+            patch("message_relay.dependencies.KafkaHelper") as mock_kafka,
+            patch("message_relay.dependencies.RedisHelper") as mock_redis,
+        ):
             service = MessageRelayService()
 
             # Verify KafkaHelper was initialized
@@ -49,11 +52,7 @@ class TestMessageRelayService:
         """Test successful message processing"""
         relay_service.redis_helper.publish = AsyncMock(return_value=2)  # 2 subscribers
 
-        message = {
-            "userid": "testuser",
-            "type": "response",
-            "content": "Hello from AI"
-        }
+        message = {"userid": "testuser", "type": "response", "content": "Hello from AI"}
 
         await relay_service.process_message(message)
 
@@ -73,10 +72,7 @@ class TestMessageRelayService:
     @pytest.mark.asyncio
     async def test_process_message_missing_userid(self, relay_service):
         """Test message processing with missing userid"""
-        message = {
-            "type": "response",
-            "content": "Hello"
-        }
+        message = {"type": "response", "content": "Hello"}
 
         await relay_service.process_message(message)
 
@@ -90,7 +86,7 @@ class TestMessageRelayService:
 
         message = {
             "userid": "testuser",
-            "content": "Hello"
+            "content": "Hello",
             # No "type" field
         }
 
@@ -108,11 +104,7 @@ class TestMessageRelayService:
             side_effect=Exception("Redis connection error")
         )
 
-        message = {
-            "userid": "testuser",
-            "type": "response",
-            "content": "Hello"
-        }
+        message = {"userid": "testuser", "type": "response", "content": "Hello"}
 
         # Should not raise exception (error is caught and logged)
         await relay_service.process_message(message)
@@ -122,11 +114,7 @@ class TestMessageRelayService:
         """Test successful Redis publish"""
         relay_service.redis_helper.publish = AsyncMock(return_value=3)
 
-        message = {
-            "userid": "testuser",
-            "type": "response",
-            "content": "Test message"
-        }
+        message = {"userid": "testuser", "type": "response", "content": "Test message"}
 
         await relay_service.publish_to_redis("testuser", message)
 
@@ -149,7 +137,7 @@ class TestMessageRelayService:
         message = {
             "userid": "testuser",
             "type": "response",
-            "content": "No one listening"
+            "content": "No one listening",
         }
 
         # Should complete without error even with 0 subscribers
@@ -162,10 +150,7 @@ class TestMessageRelayService:
         """Test that publish_to_redis adds type if not present"""
         relay_service.redis_helper.publish = AsyncMock(return_value=1)
 
-        message = {
-            "userid": "testuser",
-            "content": "Message without type"
-        }
+        message = {"userid": "testuser", "content": "Message without type"}
 
         await relay_service.publish_to_redis("testuser", message)
 
@@ -181,11 +166,7 @@ class TestMessageRelayService:
             side_effect=Exception("Redis error")
         )
 
-        message = {
-            "userid": "testuser",
-            "type": "response",
-            "content": "Test"
-        }
+        message = {"userid": "testuser", "type": "response", "content": "Test"}
 
         # Should raise exception
         with pytest.raises(Exception, match="Redis error"):
@@ -209,8 +190,10 @@ class TestMessageFormats:
     @pytest.fixture
     def relay_service(self):
         """Create MessageRelayService with mocked dependencies"""
-        with patch('message_relay.dependencies.KafkaHelper'), \
-             patch('message_relay.dependencies.RedisHelper'):
+        with (
+            patch("message_relay.dependencies.KafkaHelper"),
+            patch("message_relay.dependencies.RedisHelper"),
+        ):
             service = MessageRelayService()
             service.kafka_helper = MagicMock()
             service.redis_helper = AsyncMock()
@@ -226,7 +209,7 @@ class TestMessageFormats:
             "content": "Hello",
             "timestamp": "2024-01-01T00:00:00",
             "processing_time_ms": 100,
-            "correlation_id": "abc-123"
+            "correlation_id": "abc-123",
         }
 
         await relay_service.publish_to_redis("testuser", message)
@@ -244,7 +227,7 @@ class TestMessageFormats:
         message = {
             "userid": "testuser",
             "type": "response",
-            "content": "Hello 你好 🎉\n\tSpecial: @#$%"
+            "content": "Hello 你好 🎉\n\tSpecial: @#$%",
         }
 
         await relay_service.publish_to_redis("testuser", message)
@@ -261,11 +244,7 @@ class TestMessageFormats:
             "userid": "testuser",
             "type": "response",
             "content": "Hello",
-            "metadata": {
-                "source": "ai",
-                "model": "gpt-3.5-turbo",
-                "tokens": 100
-            }
+            "metadata": {"source": "ai", "model": "gpt-3.5-turbo", "tokens": 100},
         }
 
         await relay_service.publish_to_redis("testuser", message)
@@ -280,11 +259,7 @@ class TestMessageFormats:
     @pytest.mark.asyncio
     async def test_empty_content(self, relay_service):
         """Test message with empty content"""
-        message = {
-            "userid": "testuser",
-            "type": "response",
-            "content": ""
-        }
+        message = {"userid": "testuser", "type": "response", "content": ""}
 
         await relay_service.publish_to_redis("testuser", message)
 

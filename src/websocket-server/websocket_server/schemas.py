@@ -34,6 +34,7 @@ class WebSocketUserMessage(BaseModel):
         description="ISO 8601 timestamp of the message",
         default_factory=lambda: datetime.now(UTC).isoformat(),
     )
+
     @field_validator("content")
     @classmethod
     def sanitize_content(cls, v):
@@ -42,6 +43,7 @@ class WebSocketUserMessage(BaseModel):
         # Strip excessive whitespace
         v = " ".join(v.split())
         return v
+
 
 class KafkaMessage(WebSocketUserMessage):
     userid: str = Field(

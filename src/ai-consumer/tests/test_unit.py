@@ -11,7 +11,7 @@ class TestAIConsumer:
     @pytest.fixture
     def mock_settings(self):
         """Mock settings for testing"""
-        with patch('ai_consumer.dependencies.settings') as mock_settings:
+        with patch("ai_consumer.dependencies.settings") as mock_settings:
             mock_settings.openai_api_key = "test-key"
             mock_settings.max_workers = 5
             mock_settings.consume_topic = "incoming_messages"
@@ -21,9 +21,11 @@ class TestAIConsumer:
     @pytest.fixture
     def ai_consumer(self, mock_settings):
         """Create AIConsumer instance with mocked dependencies"""
-        with patch('ai_consumer.dependencies.KafkaHelper'), \
-             patch('ai_consumer.dependencies.OpenAI'), \
-             patch('ai_consumer.dependencies.ThreadPoolExecutor'):
+        with (
+            patch("ai_consumer.dependencies.KafkaHelper"),
+            patch("ai_consumer.dependencies.OpenAI"),
+            patch("ai_consumer.dependencies.ThreadPoolExecutor"),
+        ):
             consumer = AIConsumer()
             consumer.kafka_helper = MagicMock()
             consumer.openai_client = MagicMock()
@@ -32,10 +34,11 @@ class TestAIConsumer:
 
     def test_initialization(self, mock_settings):
         """Test AIConsumer initialization"""
-        with patch('ai_consumer.dependencies.KafkaHelper') as mock_kafka, \
-             patch('ai_consumer.dependencies.OpenAI') as mock_openai, \
-             patch('ai_consumer.dependencies.ThreadPoolExecutor') as mock_executor:
-
+        with (
+            patch("ai_consumer.dependencies.KafkaHelper") as mock_kafka,
+            patch("ai_consumer.dependencies.OpenAI") as mock_openai,
+            patch("ai_consumer.dependencies.ThreadPoolExecutor") as mock_executor,
+        ):
             consumer = AIConsumer()
 
             # Verify KafkaHelper was initialized
@@ -44,8 +47,7 @@ class TestAIConsumer:
 
             # Verify OpenAI client was created
             mock_openai.assert_called_once_with(
-                api_key=mock_settings.openai_api_key,
-                max_retries=0
+                api_key=mock_settings.openai_api_key, max_retries=0
             )
 
             # Verify ThreadPoolExecutor was created
@@ -53,11 +55,13 @@ class TestAIConsumer:
 
     def test_process_message_success(self, ai_consumer):
         """Test successful message processing"""
-        with patch.object(ai_consumer, 'process_with_openai', return_value="AI response here"):
+        with patch.object(
+            ai_consumer, "process_with_openai", return_value="AI response here"
+        ):
             message = {
                 "userid": "testuser",
                 "content": "Hello AI",
-                "correlation_id": "test-123"
+                "correlation_id": "test-123",
             }
 
             ai_consumer.process_message(message)
@@ -70,7 +74,9 @@ class TestAIConsumer:
             call_args = ai_consumer.kafka_helper.publish.call_args[0]
 
             # Verify published message structure
-            assert call_args[0] == ai_consumer.kafka_helper.publish.call_args[0][0]  # topic
+            assert (
+                call_args[0] == ai_consumer.kafka_helper.publish.call_args[0][0]
+            )  # topic
             response_msg = call_args[1]
             assert response_msg["type"] == "response"
             assert response_msg["content"] == "AI response here"
@@ -81,11 +87,10 @@ class TestAIConsumer:
 
     def test_process_message_missing_userid(self, ai_consumer):
         """Test message processing with missing userid"""
-        with patch.object(ai_consumer, 'process_with_openai', return_value="AI response"):
-            message = {
-                "content": "Hello",
-                "correlation_id": "test-123"
-            }
+        with patch.object(
+            ai_consumer, "process_with_openai", return_value="AI response"
+        ):
+            message = {"content": "Hello", "correlation_id": "test-123"}
 
             # Should still process but userid will be None
             ai_consumer.process_message(message)
@@ -97,11 +102,13 @@ class TestAIConsumer:
 
     def test_process_message_openai_failure(self, ai_consumer):
         """Test message processing when OpenAI fails"""
-        with patch.object(ai_consumer, 'process_with_openai', side_effect=Exception("OpenAI error")):
+        with patch.object(
+            ai_consumer, "process_with_openai", side_effect=Exception("OpenAI error")
+        ):
             message = {
                 "userid": "testuser",
                 "content": "Hello",
-                "correlation_id": "test-123"
+                "correlation_id": "test-123",
             }
 
             # Should raise exception
@@ -141,21 +148,27 @@ class TestAIConsumer:
 
     def test_process_with_openai_timeout(self, ai_consumer):
         """Test OpenAI API timeout"""
-        ai_consumer.openai_client.chat.completions.create.side_effect = TimeoutError("Request timeout")
+        ai_consumer.openai_client.chat.completions.create.side_effect = TimeoutError(
+            "Request timeout"
+        )
 
         with pytest.raises(TimeoutError):
             ai_consumer.process_with_openai("Hello")
 
     def test_process_with_openai_rate_limit(self, ai_consumer):
         """Test OpenAI API rate limit error"""
-        ai_consumer.openai_client.chat.completions.create.side_effect = Exception("rate_limit exceeded")
+        ai_consumer.openai_client.chat.completions.create.side_effect = Exception(
+            "rate_limit exceeded"
+        )
 
         with pytest.raises(Exception, match="rate_limit"):
             ai_consumer.process_with_openai("Hello")
 
     def test_process_with_openai_generic_error(self, ai_consumer):
         """Test OpenAI API generic error"""
-        ai_consumer.openai_client.chat.completions.create.side_effect = Exception("API error")
+        ai_consumer.openai_client.chat.completions.create.side_effect = Exception(
+            "API error"
+        )
 
         with pytest.raises(Exception, match="API error"):
             ai_consumer.process_with_openai("Hello")
@@ -165,7 +178,9 @@ class TestAIConsumer:
         ai_consumer.cleanup()
 
         # Verify executor was shut down
-        ai_consumer.executor.shutdown.assert_called_once_with(wait=True, cancel_futures=False)
+        ai_consumer.executor.shutdown.assert_called_once_with(
+            wait=True, cancel_futures=False
+        )
 
         # Verify kafka was torn down
         ai_consumer.kafka_helper.teardown.assert_called_once()
@@ -177,9 +192,11 @@ class TestProcessMessageContent:
     @pytest.fixture
     def ai_consumer(self):
         """Create AIConsumer with minimal mocking"""
-        with patch('ai_consumer.dependencies.KafkaHelper'), \
-             patch('ai_consumer.dependencies.OpenAI'), \
-             patch('ai_consumer.dependencies.ThreadPoolExecutor'):
+        with (
+            patch("ai_consumer.dependencies.KafkaHelper"),
+            patch("ai_consumer.dependencies.OpenAI"),
+            patch("ai_consumer.dependencies.ThreadPoolExecutor"),
+        ):
             consumer = AIConsumer()
             consumer.kafka_helper = MagicMock()
             consumer.openai_client = MagicMock()
@@ -187,11 +204,13 @@ class TestProcessMessageContent:
 
     def test_empty_content(self, ai_consumer):
         """Test processing message with empty content"""
-        with patch.object(ai_consumer, 'process_with_openai', return_value="Response") as mock_openai:
+        with patch.object(
+            ai_consumer, "process_with_openai", return_value="Response"
+        ) as mock_openai:
             message = {
                 "userid": "testuser",
                 "content": "",
-                "correlation_id": "test-123"
+                "correlation_id": "test-123",
             }
 
             ai_consumer.process_message(message)
@@ -201,12 +220,14 @@ class TestProcessMessageContent:
 
     def test_long_content(self, ai_consumer):
         """Test processing message with long content"""
-        with patch.object(ai_consumer, 'process_with_openai', return_value="Response") as mock_openai:
+        with patch.object(
+            ai_consumer, "process_with_openai", return_value="Response"
+        ) as mock_openai:
             long_text = "This is a very long message. " * 100
             message = {
                 "userid": "testuser",
                 "content": long_text,
-                "correlation_id": "test-123"
+                "correlation_id": "test-123",
             }
 
             ai_consumer.process_message(message)
@@ -216,12 +237,14 @@ class TestProcessMessageContent:
 
     def test_special_characters_content(self, ai_consumer):
         """Test processing message with special characters"""
-        with patch.object(ai_consumer, 'process_with_openai', return_value="Response") as mock_openai:
+        with patch.object(
+            ai_consumer, "process_with_openai", return_value="Response"
+        ) as mock_openai:
             special_text = "Hello! 你好 🎉 \n\t Special chars: @#$%^&*()"
             message = {
                 "userid": "testuser",
                 "content": special_text,
-                "correlation_id": "test-123"
+                "correlation_id": "test-123",
             }
 
             ai_consumer.process_message(message)

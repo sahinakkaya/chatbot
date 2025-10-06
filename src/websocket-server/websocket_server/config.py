@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     allow_methods: Sequence[str] = ["*"]
     allow_headers: Sequence[str] = ["*"]
 
-
     redis_host: str = "localhost"
     redis_port: int = 6379
 

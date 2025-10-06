@@ -26,7 +26,6 @@ async def lifespan(_: FastAPI):
         }
     )
 
-
     # Start listening to Redis messages
     asyncio.create_task(redis_helper.pubsub.run())
     yield
@@ -34,4 +33,3 @@ async def lifespan(_: FastAPI):
 
     await redis_helper.teardown()
     kafka_helper.teardown()
-
