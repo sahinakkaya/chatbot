@@ -1,12 +1,17 @@
 import logging
-from datetime import UTC, datetime
 
 import metrics.websocket as metrics
 from asgi_correlation_id import correlation_id
+from pydantic import ValidationError
 from websocket_server.config import settings
+from websocket_server.schemas import KafkaMessage, WebSocketUserMessage
 from websocket_server.util import check_rate_limit, kafka_helper
 
 logger = logging.getLogger(__name__)
+
+
+class MessageHandlerError(Exception):
+    pass
 
 
 class MessageHandler:
@@ -20,39 +25,31 @@ class MessageHandler:
             ).inc()
         return is_allowed
 
-    async def process_message(self, data: dict, userid: str) -> dict | None:
+    async def process_message(self, raw_data: dict, userid: str) -> dict | None:
         """Process incoming message and return error if any"""
         metrics.websocket_messages_received_total.labels(
             server_id=settings.server_id, userid=userid
         ).inc()
 
-        if data.get("type") != "message" or not data.get("content"):
-            logger.warning(f"Invalid message format from user {userid}: {data}")
+        try:
+            data = WebSocketUserMessage(**raw_data)
+        except ValidationError:
+            logger.warning(f"Invalid message format from user {userid}: {raw_data}")
             metrics.websocket_message_errors_total.labels(
                 server_id=settings.server_id, error_type="invalid_format"
             ).inc()
-            return {
-                "type": "error",
-                "message": "Invalid message format",
-                "userid": userid,
-            }
+            raise MessageHandlerError("Invalid message format")
 
         # Check rate limit
         is_allowed = await self.check_rate_limit(userid)
         if not is_allowed:
-            return {
-                "type": "error",
-                "message": "Rate limit exceeded. Please slow down.",
-                "userid": userid,
-            }
+            raise MessageHandlerError("Rate limit exceeded. Please slow down.")
 
         # Publish to Kafka
-        kafka_message = {
-            "type": "message",
-            "content": data["content"],
-            "userid": userid,
-            "timestamp": datetime.now(UTC).isoformat(),
-            "server_id": settings.server_id,
-            "correlation_id": correlation_id.get(),
-        }
-        kafka_helper.publish(settings.produce_topic, kafka_message)
+        kafka_message = KafkaMessage(
+            **data.model_dump(),
+            userid=userid,
+            server_id=settings.server_id,
+            correlation_id=correlation_id.get(),
+        )
+        kafka_helper.publish(settings.produce_topic, kafka_message.model_dump())

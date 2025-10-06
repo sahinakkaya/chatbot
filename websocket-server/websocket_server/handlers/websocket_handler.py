@@ -1,4 +1,5 @@
 import json
+import time
 import logging
 from functools import partial
 from typing import Dict, Set
@@ -8,8 +9,11 @@ from fastapi import WebSocket
 from logger import correlation_id_var
 from websocket_server.config import settings
 from websocket_server.util import redis_helper
+from websocket_server.handlers.message_handler import MessageHandler, MessageHandlerError
 
 logger = logging.getLogger(__name__)
+
+message_handler = MessageHandler()
 
 
 class WebSocketHandler:
@@ -39,6 +43,23 @@ class WebSocketHandler:
         logger.info(
             f"WebSocket connected: server_id={settings.server_id}, {user_id=} total_connections_of_user={len(self.active_connections[user_id])}"
         )
+
+    async def receive_and_process_messages(self, websocket: WebSocket, userid: str):
+        while True:
+            start_time = time.time()
+            data = await websocket.receive_json()
+
+            try:
+                await message_handler.process_message(data, userid)
+            except MessageHandlerError as e:
+                logger.warning(f"Message handler error for user {userid}: {str(e)}")
+                await websocket.send_json({"message": str(e), "type": "error" })
+
+            # Record message processing duration
+            duration = time.time() - start_time
+            metrics.websocket_message_duration_seconds.labels(
+                server_id=settings.server_id
+            ).observe(duration)
 
     async def disconnect(
         self, websocket: WebSocket, user_id: str, reason: str = "normal"

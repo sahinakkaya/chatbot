@@ -2,10 +2,11 @@ import logging
 import secrets
 
 import metrics.websocket as metrics
-from fastapi import Query
+from fastapi import Depends, Query
 from kafka_helper import KafkaHelper
 from redis_helper import RedisHelper
 from websocket_server.config import settings
+from websocket_server.schemas import UrlParams, UserId
 
 logger = logging.getLogger(__name__)
 
@@ -13,27 +14,45 @@ redis_helper = RedisHelper(settings)
 kafka_helper = KafkaHelper(settings)
 
 
+def get_valid_user_id(userid: str = Query(...)):
+    return UserId(userid=userid)
 
-async def valid_user_with_token(token: str = Query(...), userid: str = Query(...)):
-    is_valid = await validate_token(token, userid)
+
+def get_url_params(token: str = Query(...), userid: str = Query(...)):
+    return UrlParams(token=token, userid=userid)
+
+
+async def valid_user_with_token(params: UrlParams = Depends(get_url_params)):
+    is_valid = await validate_token(params.token, params.userid)
     if not is_valid:
-        logger.warning(f"Invalid token for userid={userid}")
+        logger.warning(f"Invalid token for userid={params.userid}")
         metrics.websocket_message_errors_total.labels(
             server_id=settings.server_id, error_type="invalid_token"
         ).inc()
         return
-    return userid
+    return params.userid
 
 
 async def validate_token(token: str, userid: str) -> bool:
-    stored_userid = await redis_helper.get(f"token:{token}")
-    return stored_userid == userid
+    stored_token = await redis_helper.get(f"token:{userid}")
+    return stored_token == token
 
 
 async def generate_token(userid: str) -> str:
+    """
+    Generate or return existing authentication token for user.
+    Stores as token:{userid} = token for easy lookup.
+    """
+    # Check if user already has a valid token
+    existing_token = await redis_helper.get(f"token:{userid}")
+    if existing_token:
+        logger.info(f"Returning existing token for userid={userid}")
+        return existing_token
+
+    # Generate new token
     token = secrets.token_urlsafe(32)
-    await redis_helper.set(f"token:{token}", userid, settings.token_ttl)
-    logger.info(f"Generated token for userid={userid}, ttl={settings.token_ttl}s")
+    await redis_helper.set(f"token:{userid}", token, settings.token_ttl)
+    logger.info(f"Generated new token for userid={userid}, ttl={settings.token_ttl}s")
     return token
 
 

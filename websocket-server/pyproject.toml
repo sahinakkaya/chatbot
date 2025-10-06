@@ -9,6 +9,7 @@ dependencies = [
     "kafka-helper",
     "logger",
     "metrics",
+    "pydantic>=2.11.9",
     "pydantic-settings>=2.11.0",
     "redis-helper",
     "uvicorn[standard]>=0.37.0",

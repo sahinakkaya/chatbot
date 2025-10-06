@@ -2,18 +2,20 @@ import logging
 import time
 
 import metrics.websocket as metrics
-from fastapi import (APIRouter, Depends, Query, Response, WebSocket,
-                     WebSocketDisconnect)
+from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from websocket_server.config import settings
-from websocket_server.handlers.message_handler import MessageHandler
 from websocket_server.handlers.websocket_handler import WebSocketHandler
-from websocket_server.util import generate_token, valid_user_with_token
+from websocket_server.schemas import UserId
+from websocket_server.util import (
+    generate_token,
+    get_valid_user_id,
+    valid_user_with_token,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-message_handler = MessageHandler()
 websocket_handler = WebSocketHandler()
 
 
@@ -25,28 +27,16 @@ async def websocket_endpoint(
         if not userid:
             raise WebSocketDisconnect(code=1008, reason="invalid_token")
         await websocket_handler.connect(websocket, userid)
-        while True:
-            start_time = time.time()
-            data = await websocket.receive_json()
-
-            # Process message through service layer
-            error_response = await message_handler.process_message(data, userid)
-
-            if error_response:
-                await websocket.send_json(error_response)
-            else:
-                # Record message processing duration
-                duration = time.time() - start_time
-                metrics.websocket_message_duration_seconds.labels(
-                    server_id=settings.server_id
-                ).observe(duration)
+        await websocket_handler.receive_and_process_messages(websocket, userid)
 
     except WebSocketDisconnect as e:
         if e.code == 1008:
             logger.info("WebSocket disconnected due to invalid token for user")
             await websocket.close(code=1008)
         else:
-            await websocket_handler.disconnect(websocket, userid, reason="client_disconnected")
+            await websocket_handler.disconnect(
+                websocket, userid, reason="client_disconnected"
+            )
     except Exception as e:
         logger.error(
             f"WebSocket error {str(e)}",
@@ -78,10 +68,10 @@ async def root():
 
 
 @router.post("/token")
-async def generate_token_for_user(userid: str = Query(...)):
+async def generate_token_for_user(userid: UserId = Depends(get_valid_user_id)):
     """Generate authentication token for user"""
-    token = await generate_token(userid)
-    return {"token": token, "userid": userid, "expires_in": 3600}
+    token = await generate_token(userid.userid)
+    return {"token": token, "userid": userid.userid, "expires_in": 3600}
 
 
 @router.get("/metrics")
