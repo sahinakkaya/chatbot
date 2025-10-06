@@ -24,6 +24,7 @@ Client → Nginx → WebSocket Server (2 instances) → Kafka (incoming_messages
 - **Load Balancer**: Nginx (least_conn strategy)
 - **Monitoring**: Prometheus + Grafana
 - **Logging**: Structured JSON logging with correlation IDs
+- **CI/CD**: GitHub Actions with reusable Docker build action
 
 ## Services
 
@@ -65,9 +66,18 @@ You don't need to do anything else if you just want to run with docker. If you w
 
 ### 2. Start Services
 
+**Option A: Build images locally**
 ```bash
 cd infra/docker
 docker compose up --build -d
+```
+
+**Option B: Use pre-built images from GitHub Container Registry**
+```bash
+cd infra/docker
+# I made the images public so you don't need to login
+# Start services using pre-built images
+docker compose -f docker-compose.dependencies.yml -f docker-compose.backend.ghcr.yml -f docker-compose.monitoring.yml up -d
 ```
 ### 3. Use the App
 The nginx load balancer will be running on `8080` by default. All the requests made are proxied to websocket-server. There is an endpoint in websocket-server in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. You can visit http://localhost:8080/ in order to quickly test it via simple ui.

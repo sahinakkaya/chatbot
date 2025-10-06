@@ -1,0 +1,120 @@
+services:
+  websocket-server-1:
+    image: ghcr.io/sahinakkaya/nova-prime-websocket-server:main
+    container_name: ws-server-1
+    env_file:
+      - ../../src/websocket-server/.env.example
+    environment:
+      SERVER_ID: "server_1"
+      APP_NAME: "ws-server-1"
+    volumes:
+      - ./docker-logs:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    networks:
+      - app-network
+
+  # WebSocket Server Instance 2
+  websocket-server-2:
+    image: ghcr.io/sahinakkaya/nova-prime-websocket-server:main
+    container_name: ws-server-2
+    env_file:
+      - ../../src/websocket-server/.env.example
+    environment:
+      SERVER_ID: "server_2"
+      APP_NAME: "ws-server-2"
+    volumes:
+      - ./docker-logs:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    networks:
+      - app-network
+
+  # AI Consumer Service
+  ai-consumer:
+    image: ghcr.io/sahinakkaya/nova-prime-ai-consumer:main
+    container_name: ai-consumer
+    env_file:
+      - ../../src/ai-consumer/.env.example
+    volumes:
+      - ./docker-logs:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Message Relay Service
+  message-relay:
+    image: ghcr.io/sahinakkaya/nova-prime-message-relay:main
+    container_name: message-relay
+    env_file:
+      - ../../src/message-relay/.env.example
+    volumes:
+      - ./docker-logs:/var/log/nova-prime
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/test-ui.html:/usr/share/nginx/html/test-ui.html:ro
+    depends_on:
+      - websocket-server-1
+      - websocket-server-2
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
