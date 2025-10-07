@@ -8,7 +8,7 @@ services:
       SERVER_ID: "server_1"
       APP_NAME: "ws-server-1"
     volumes:
-      - ./docker-logs:/var/log/nova-prime
+      - logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -42,7 +42,7 @@ services:
       SERVER_ID: "server_2"
       APP_NAME: "ws-server-2"
     volumes:
-      - ./docker-logs:/var/log/nova-prime
+      - logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -73,7 +73,7 @@ services:
     env_file:
       - ../../src/ai-consumer/.env.example
     volumes:
-      - ./docker-logs:/var/log/nova-prime
+      - logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -90,7 +90,7 @@ services:
     env_file:
       - ../../src/message-relay/.env.example
     volumes:
-      - ./docker-logs:/var/log/nova-prime
+      - logs:/var/log/nova-prime
     depends_on:
       kafka:
         condition: service_healthy
@@ -114,6 +114,9 @@ services:
       - websocket-server-2
     networks:
       - app-network
+
+volumes:
+  logs:
 
 networks:
   app-network:
