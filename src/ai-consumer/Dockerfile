@@ -16,7 +16,6 @@ WORKDIR /app
 # Copy common dependencies first
 COPY ./common/kafka-helper /common/kafka-helper
 COPY ./common/logger /common/logger
-COPY ./common/metrics /common/metrics
 
 COPY ./ai-consumer/uv.lock ./ai-consumer/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \

@@ -3,7 +3,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
-import metrics.ai_consumer as metrics
 from ai_consumer.config import settings
 from kafka_helper import KafkaHelper
 from logger import correlation_id_var
@@ -60,25 +59,9 @@ class AIConsumer:
 
             self.kafka_helper.publish(settings.produce_topic, response_message)
 
-            # Update metrics
-            metrics.ai_consumer_messages_processed_total.labels(status="success").inc()
-            metrics.ai_consumer_processing_duration_seconds.labels(
-                status="success"
-            ).observe(processing_time)
-            metrics.ai_consumer_kafka_publish_total.labels(
-                topic=settings.produce_topic, status="success"
-            ).inc()
-
             logger.info(f"Sent response: {response_message}")
         except Exception as e:
             processing_time = time.time() - start_time
-            metrics.ai_consumer_messages_failed_total.labels(
-                error_type=type(e).__name__
-            ).inc()
-            metrics.ai_consumer_messages_processed_total.labels(status="failed").inc()
-            metrics.ai_consumer_processing_duration_seconds.labels(
-                status="failed"
-            ).observe(processing_time)
             logger.error(
                 f"Failed to process message: {str(e)}",
                 extra={"userid": userid, "error": str(e)},
@@ -90,13 +73,9 @@ class AIConsumer:
         stop=stop_after_attempt(7),
         wait=wait_exponential(),
         reraise=True,
-        before_sleep=lambda retry_state: metrics.ai_consumer_openai_retries_total.labels(
-            attempt=str(retry_state.attempt_number)
-        ).inc(),
     )
     def process_with_openai(self, content):
         model = "gpt-3.5-turbo"
-        start_time = time.time()
 
         try:
             response = self.openai_client.chat.completions.create(
@@ -113,40 +92,13 @@ class AIConsumer:
                 timeout=2.0,  # 2 second timeout
             )
             ai_response = response.choices[0].message.content
-            duration = time.time() - start_time
-
-            # Update metrics
-            metrics.ai_consumer_openai_requests_total.labels(
-                model=model, status="success"
-            ).inc()
-            metrics.ai_consumer_openai_duration_seconds.labels(model=model).observe(
-                duration
-            )
-            metrics.ai_consumer_openai_tokens_total.labels(
-                model=model, type="prompt"
-            ).inc(response.usage.prompt_tokens)
-            metrics.ai_consumer_openai_tokens_total.labels(
-                model=model, type="completion"
-            ).inc(response.usage.completion_tokens)
-            metrics.ai_consumer_openai_tokens_total.labels(
-                model=model, type="total"
-            ).inc(response.usage.total_tokens)
 
             logger.info(f"AI response: {ai_response}")
             return ai_response
         except TimeoutError as e:
-            metrics.ai_consumer_openai_requests_total.labels(
-                model=model, status="timeout"
-            ).inc()
-            metrics.ai_consumer_openai_errors_total.labels(error_type="timeout").inc()
             logger.error(f"OpenAI API timeout: {str(e)}", extra={"error": str(e)})
             raise
         except Exception as e:
-            error_type = "rate_limit" if "rate_limit" in str(e).lower() else "api_error"
-            metrics.ai_consumer_openai_requests_total.labels(
-                model=model, status="error"
-            ).inc()
-            metrics.ai_consumer_openai_errors_total.labels(error_type=error_type).inc()
             logger.error(f"OpenAI API error: {str(e)}", extra={"error": str(e)})
             raise
 
@@ -161,19 +113,6 @@ class AIConsumer:
                 correlation_id_var.set(msg_correlation_id)
 
                 logger.info(f"Received message: {message.value}")
-
-                # Update metrics
-                metrics.ai_consumer_messages_received_total.labels(
-                    topic=settings.consume_topic
-                ).inc()
-
-                # Update thread pool metrics
-                metrics.ai_consumer_thread_pool_active.set(
-                    len([t for t in self.executor._threads if t.is_alive()])
-                )
-                metrics.ai_consumer_thread_pool_queue_size.set(
-                    self.executor._work_queue.qsize()
-                )
 
                 # Submit to thread pool for concurrent processing
                 self.executor.submit(self.process_message, message.value)

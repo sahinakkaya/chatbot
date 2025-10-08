@@ -16,7 +16,6 @@ WORKDIR /app
 COPY ./common/kafka-helper /common/kafka-helper
 COPY ./common/redis-helper /common/redis-helper
 COPY ./common/logger /common/logger
-COPY ./common/metrics /common/metrics
 
 COPY ./message-relay/uv.lock ./message-relay/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \

@@ -1,9 +1,7 @@
 import logging
 import time
 
-import metrics.websocket as metrics
 from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from websocket_server.config import settings
 from websocket_server.handlers.websocket_handler import WebSocketHandler
 from websocket_server.schemas import UserId
@@ -42,9 +40,6 @@ async def websocket_endpoint(
             f"WebSocket error {str(e)}",
             extra={"userid": userid, "error": str(e), "server_id": settings.server_id},
         )
-        metrics.websocket_message_errors_total.labels(
-            server_id=settings.server_id, error_type="exception"
-        ).inc()
         await websocket_handler.disconnect(websocket, userid, reason="error")
 
 
@@ -72,9 +67,3 @@ async def generate_token_for_user(userid: UserId = Depends(get_valid_user_id)):
     """Generate authentication token for user"""
     token = await generate_token(userid.userid)
     return {"token": token, "userid": userid.userid, "expires_in": 3600}
-
-
-@router.get("/metrics")
-async def metrics_endpoint():
-    """Prometheus metrics endpoint"""
-    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)

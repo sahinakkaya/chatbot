@@ -1,4 +1,3 @@
 include:
   - ./docker-compose.dependencies.yml
   - ./docker-compose.backend.yml
-  - ./docker-compose.monitoring.yml

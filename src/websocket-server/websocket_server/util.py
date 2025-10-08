@@ -1,7 +1,6 @@
 import logging
 import secrets
 
-import metrics.websocket as metrics
 from fastapi import Depends, Query
 from kafka_helper import KafkaHelper
 from redis_helper import RedisHelper
@@ -26,9 +25,6 @@ async def valid_user_with_token(params: UrlParams = Depends(get_url_params)):
     is_valid = await validate_token(params.token, params.userid)
     if not is_valid:
         logger.warning(f"Invalid token for userid={params.userid}")
-        metrics.websocket_message_errors_total.labels(
-            server_id=settings.server_id, error_type="invalid_token"
-        ).inc()
         return
     return params.userid
 

@@ -8,7 +8,6 @@ dependencies = [
     "fastapi>=0.118.0",
     "kafka-helper",
     "logger",
-    "metrics",
     "pydantic>=2.11.9",
     "pydantic-settings>=2.11.0",
     "redis-helper",
@@ -23,7 +22,6 @@ test = [
 ]
 
 [tool.uv.sources]
-metrics = { path = "../common/metrics" }
 kafka-helper = { path = "../common/kafka-helper" }
 logger = { path = "../common/logger" }
 redis-helper = { path = "../common/redis-helper" }

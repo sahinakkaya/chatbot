@@ -11,9 +11,6 @@ class Settings(BaseSettings):
     consume_topic: str = "responses"
     produce_topic: str = ""
 
-    # Metrics
-    metrics_port: int = 8001  # Port for Prometheus metrics HTTP server
-
     # logging
     log_level: str = "INFO"
     app_name: str = "message-relay"

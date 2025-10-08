@@ -16,9 +16,6 @@ class Settings(BaseSettings):
     # Concurrency
     max_workers: int = 50  # Number of concurrent OpenAI API calls
 
-    # Metrics
-    metrics_port: int = 8002  # Port for Prometheus metrics HTTP server
-
     # logging
     log_level: str = "INFO"
     app_name: str = "ai-consumer"

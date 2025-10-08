@@ -1,6 +1,5 @@
 import logging
 
-import metrics.websocket as metrics
 from asgi_correlation_id import correlation_id
 from pydantic import ValidationError
 from websocket_server.config import settings
@@ -20,24 +19,14 @@ class MessageHandler:
         is_allowed = await check_rate_limit(userid)
         if not is_allowed:
             logger.warning(f"Rate limit exceeded for user {userid}")
-            metrics.websocket_message_errors_total.labels(
-                server_id=settings.server_id, error_type="rate_limit"
-            ).inc()
         return is_allowed
 
     async def process_message(self, raw_data: dict, userid: str) -> dict | None:
         """Process incoming message and raise MessageHandlerError on failure"""
-        metrics.websocket_messages_received_total.labels(
-            server_id=settings.server_id, userid=userid
-        ).inc()
-
         try:
             data = WebSocketUserMessage(**raw_data)
         except ValidationError:
             logger.warning(f"Invalid message format from user {userid}: {raw_data}")
-            metrics.websocket_message_errors_total.labels(
-                server_id=settings.server_id, error_type="invalid_format"
-            ).inc()
             raise MessageHandlerError("Invalid message format")
 
         # Check rate limit
