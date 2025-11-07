@@ -1,0 +1,62 @@
+{
+  "personal": {
+    "name": "Your Name",
+    "title": "Software Engineer / Full Stack Developer",
+    "location": "City, Country",
+    "email": "your.email@example.com",
+    "website": "https://yourwebsite.com",
+    "github": "https://github.com/yourusername"
+  },
+  "summary": "Experienced software engineer with 5+ years building scalable web applications. Specialized in Python, JavaScript, and distributed systems. Passionate about clean code and solving complex problems.",
+  "experience": [
+    {
+      "title": "Senior Software Engineer",
+      "company": "Tech Company Inc.",
+      "location": "Remote",
+      "duration": "2021 - Present",
+      "description": "Led development of microservices architecture handling 1M+ daily requests. Built real-time features using WebSockets and Kafka. Mentored junior developers."
+    },
+    {
+      "title": "Software Engineer",
+      "company": "Startup XYZ",
+      "location": "City, Country",
+      "duration": "2019 - 2021",
+      "description": "Developed full-stack web applications using React and Django. Implemented CI/CD pipelines and improved deployment processes."
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Computer Science",
+      "institution": "University Name",
+      "location": "City, Country",
+      "graduation": "2019",
+      "honors": "Graduated with honors, GPA: 3.8/4.0"
+    }
+  ],
+  "skills": {
+    "languages": ["Python", "JavaScript", "TypeScript", "Go"],
+    "frameworks": ["FastAPI", "Django", "React", "Node.js"],
+    "databases": ["PostgreSQL", "Redis", "MongoDB"],
+    "tools": ["Docker", "Kubernetes", "AWS", "Git", "Kafka"]
+  },
+  "projects": [
+    {
+      "name": "Distributed Chat System",
+      "description": "Built a real-time chat application using WebSockets, Kafka, and Redis. Handles 100+ concurrent connections with sub-second latency.",
+      "tech": ["Python", "FastAPI", "Kafka", "Redis", "WebSockets"],
+      "link": "https://github.com/yourusername/project"
+    },
+    {
+      "name": "E-commerce Platform",
+      "description": "Full-stack e-commerce site with payment processing, inventory management, and admin dashboard.",
+      "tech": ["React", "Django", "PostgreSQL", "Stripe API"],
+      "link": "https://github.com/yourusername/ecommerce"
+    }
+  ],
+  "interests": ["Open source contribution", "Technical writing", "Mentoring", "Hiking"],
+  "languages_spoken": ["English (Native)", "Spanish (Conversational)"],
+  "certifications": [
+    "AWS Certified Developer - Associate",
+    "Kubernetes Application Developer (CKAD)"
+  ]
+}

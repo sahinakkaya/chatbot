@@ -82,6 +82,7 @@ services:
       - ../../src/ai-consumer/.env.example
     volumes:
       - logs:/var/log/nova-prime
+      - ../../data:/app/data:ro  # Mount data directory for knowledge base
     depends_on:
       kafka:
         condition: service_healthy
@@ -119,6 +120,7 @@ services:
     volumes:
       - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ../nginx/test-ui.html:/usr/share/nginx/html/test-ui.html:ro
+      - ../nginx/chat.html:/usr/share/nginx/html/chat.html:ro
     depends_on:
       - websocket-server-1
       - websocket-server-2

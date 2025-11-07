@@ -1,0 +1,11 @@
+[project]
+name = "knowledge-base"
+version = "0.1.0"
+description = "RAG knowledge base service for resume data"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "sentence-transformers>=3.3.1",
+    "numpy>=2.2.1",
+    "pydantic>=2.11.0",
+]

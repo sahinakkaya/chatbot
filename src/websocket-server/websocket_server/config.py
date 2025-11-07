@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     token_ttl: int = 3600
     user_rate_limit_max_requests: int = 10
     user_rate_limit_window_seconds: int = 60
+    max_message_length: int = 500
 
 
 settings = Settings()
