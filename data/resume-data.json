@@ -1,0 +1,161 @@
+{
+  "personal": {
+    "name": "Şahin Akkaya",
+    "location": "İstanbul, Turkey",
+    "title": "Fullstack Software Developer",
+    "email": "sahin@sahinakkaya.dev",
+    "website": "https://sahinakkaya.dev",
+    "github": "https://github.com/sahinakkaya",
+    "linkedin": "https://www.linkedin.com/in/sahinakkaya/",
+    "stackoverflow": "https://stackoverflow.com/users/9608759/sahinakkaya"
+  },
+  "about": "A free software enthusiast and native Python speaker",
+  "summary": "I enjoy the challenge of solving problems and learn new things. My keen eye for quality and attention to detail ensures excellence in my work. While I hold strong opinions, I show absolute zero resistance to change them based on new evidence. As a fervent advocate of free and open-source software, I actively contribute to it whenever the opportunity arises. I enjoy working with Python and Linux but I don't use this as an excuse for not using other technologies.",
+  "education": [
+    {
+      "school": "Istanbul Technical University",
+      "degree": "Bachelor's Degree in Computer Engineering",
+      "duration": "2017 - 2023",
+      "location": "İstanbul, Turkey",
+      "gpa": "2.99/4.00",
+      "courses": "Artificial Intelligence, Analysis of Algorithms, Functional Programming, Data Structures"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Fullstack Software Developer",
+      "company": "Ehane",
+      "location": "Remote",
+      "duration": "March 2024 - May 2025",
+      "type": "Full-time",
+      "website": "https://ehane.com/",
+      "technologies": "Python, FastAPI, SQLAlchemy, Docker, Celery, React Native, Github Actions, PostgreSQL, Linux",
+      "description": "Collaborated on building backend services and APIs with Python, FastAPI and Celery, using SQLAlchemy for database interactions. Containerized apps with Docker, managed PostgreSQL databases, and took part in writing Github Actions for automating CI/CD. Worked with a team to develop cross-platform mobile apps with React Native."
+    },
+    {
+      "title": "Software Developer",
+      "company": "Ascenix Instruments",
+      "location": "Remote",
+      "duration": "December 2022 - January 2024",
+      "type": "Full-time",
+      "website": "https://www.ascenix.systems/",
+      "technologies": "React, PHP, Linux",
+      "description": "Developed frontend using React framework. Worked on implementing a custom plugin for Moodle, a free open source learning platform, and deployment of the Moodle instance."
+    },
+    {
+      "title": "Embedded Software Engineer",
+      "company": "BosphorusISS",
+      "location": "İstanbul, Turkey",
+      "duration": "April 2022 - June 2022",
+      "type": "Internship",
+      "website": "https://bosphorusiss.com/",
+      "technologies": "C++",
+      "description": "Made a proof of concept work that shows how to reduce load on servers by using shared memory. Worked on exposing CAN bus to Internet."
+    },
+    {
+      "title": "DevOps Engineer",
+      "company": "Kartaca",
+      "location": "İstanbul, Turkey",
+      "duration": "October 2021 - November 2021",
+      "type": "Full-time",
+      "website": "https://kartaca.com/",
+      "technologies": "OpenLDAP",
+      "description": "Worked on upgrading an LDAP service which is used by company to the latest version."
+    },
+    {
+      "title": "Software Application Developer",
+      "company": "Kartaca",
+      "location": "İstanbul, Turkey",
+      "duration": "June 2021 - August 2021",
+      "type": "Internship",
+      "website": "https://kartaca.com/",
+      "technologies": "Java, Java Spring",
+      "description": "Worked on a Subscription Lifecycle Management System that will integrate to 3rd party apps."
+    }
+  ],
+  "skills": {
+    "languages": ["Python", "C/C++", "Java", "JavaScript", "Go", "PHP"],
+    "frameworks": ["FastAPI", "Django", "React", "React Native", "SQLAlchemy", "Java Spring", "Vue"],
+    "technologies": ["Docker", "Git", "Linux", "Kafka", "PostgreSQL", "Celery", "Github Actions", "OpenLDAP", "Nginx"],
+    "concepts": ["Backend Development", "Frontend Development", "API Development", "CI/CD", "Database Management", "Microservices", "WebSockets", "GUI Programming", "Embedded Systems"]
+  },
+  "projects": [
+    {
+      "name": "sahinakkaya.dev",
+      "description": "Self-hosted personal blog and applications including Nextcloud, Jellyfin, Gitea, Invidious and many more. Managed with nginx and various self-hosted services.",
+      "technologies": ["Nginx", "Jekyll", "Linux", "Self-hosting"],
+      "type": "Personal Site",
+      "link": "https://sahinakkaya.dev"
+    },
+    {
+      "name": "Progress",
+      "description": "A full-stack web application for tracking routines with flexible scheduling and progress visualization.",
+      "technologies": ["Go", "React", "Docker"],
+      "type": "Side Project",
+      "link": "https://github.com/sahinakkaya/progress"
+    },
+    {
+      "name": "Blackjack",
+      "description": "A multiplayer blackjack game written for fun. Uses WebSockets for communication between players and models the game as finite state machine.",
+      "technologies": ["Python", "React", "Docker", "WebSockets"],
+      "type": "Side Project",
+      "link": "https://github.com/sahinakkaya/blackjack"
+    },
+    {
+      "name": "Gitea Contribution",
+      "description": "Implemented a new feature for Gitea which enables users to see contributions for a repository with nice graphs.",
+      "technologies": ["Go", "Vue", "JavaScript", "Chart.js"],
+      "type": "Open Source Contribution",
+      "link": "https://github.com/go-gitea/gitea/pull/27882"
+    },
+    {
+      "name": "Requests Dashboard",
+      "description": "A simple web application that visualizes requests for a toy API over time.",
+      "technologies": ["Kafka", "Python", "Plotly", "Django", "Docker"],
+      "type": "Side Project",
+      "link": "https://github.com/sahinakkaya/requests-dashboard/"
+    },
+    {
+      "name": "Chess",
+      "description": "A chess game written in PyQt6 for a school project.",
+      "technologies": ["Python", "PyQt6", "GUI Programming"],
+      "type": "School Project",
+      "link": "https://github.com/sahinakkaya/chess"
+    },
+    {
+      "name": "RatTrap",
+      "description": "GUI for ratslap - mouse configuration tool. Written to easily configure mouse settings on Linux.",
+      "technologies": ["Python", "PyQt5", "GUI Programming"],
+      "type": "Side Project",
+      "link": "https://github.com/sahinakkaya/rattrap"
+    },
+    {
+      "name": "Binary Clock Wallpaper",
+      "description": "A Python script to generate wallpaper that shows time in binary format.",
+      "technologies": ["Python"],
+      "type": "Side Project",
+      "link": "https://github.com/sahinakkaya/binary-clock-wallpaper"
+    },
+    {
+      "name": "Dotfiles",
+      "description": "Highly customized development environment setup. Spent significant time configuring Arch Linux, Vim, and various tools for optimal workflow.",
+      "technologies": ["Arch Linux", "Vim", "Shell Scripting"],
+      "type": "Configuration",
+      "link": "https://github.com/sahinakkaya/dotfiles/tree/old-dots"
+    }
+  ],
+  "interests": [
+    "Free and Open Source Software (FOSS)",
+    "Self-hosting applications",
+    "Contributing to open source projects",
+    "Problem solving and learning new technologies",
+    "Linux system administration",
+    "Backend architecture and API design"
+  ],
+  "additional_info": {
+    "open_source": "Active contributor to free and open-source software. Notable contribution includes feature implementation for Gitea.",
+    "self_hosting": "Manages self-hosted infrastructure including blog, cloud storage, media server, and git server.",
+    "philosophy": "Strong advocate for FOSS. Holds strong opinions but remains open to changing them based on new evidence.",
+    "work_style": "Keen eye for quality and attention to detail. Comfortable with Python and Linux but not limited to these technologies."
+  }
+}
