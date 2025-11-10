@@ -15,6 +15,7 @@ WORKDIR /app
 
 # Copy common dependencies first
 COPY ./common/kafka-helper /common/kafka-helper
+COPY ./common/redis-helper /common/redis-helper
 COPY ./common/logger /common/logger
 
 COPY ./ai-consumer/uv.lock ./ai-consumer/pyproject.toml ./
