@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -18,6 +19,28 @@ from tenacity import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Thread-local storage for event loops
+_thread_local = threading.local()
+
+
+def get_event_loop():
+    """Get or create an event loop for the current thread"""
+    try:
+        loop = _thread_local.loop
+        if loop.is_closed():
+            raise AttributeError
+    except AttributeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        _thread_local.loop = loop
+    return loop
+
+
+def run_async(coro):
+    """Run an async coroutine in the thread's event loop"""
+    loop = get_event_loop()
+    return loop.run_until_complete(coro)
 
 
 class AIConsumer:
@@ -108,12 +131,12 @@ class AIConsumer:
         correlation_id_var.set(correlation_id)
 
         try:
-            # Run async operation in sync context
-            ai_response = asyncio.run(self.process_with_openai(userid, content))
+            # Run async operation in thread-local event loop
+            ai_response = run_async(self.process_with_openai(userid, content))
             processing_time = time.time() - start_time
 
             # Update conversation history after successful response
-            asyncio.run(self.update_conversation_history(userid, content, ai_response))
+            run_async(self.update_conversation_history(userid, content, ai_response))
 
             response_message = {
                 "type": "response",
@@ -188,8 +211,8 @@ class AIConsumer:
         """Consume messages from Kafka and process them concurrently"""
         logger.info("Starting AI Consumer service with concurrent processing")
 
-        # Initialize Redis helper
-        asyncio.run(self.redis_helper.initialize())
+        # Initialize Redis helper in main thread's event loop
+        run_async(self.redis_helper.initialize())
 
         assert self.kafka_helper.consumer is not None, "Kafka consumer not initialized"
         try:
@@ -214,7 +237,7 @@ class AIConsumer:
             logger.info("Waiting for worker threads to complete...")
             self.executor.shutdown(wait=True, cancel_futures=False)
         if self.redis_helper:
-            asyncio.run(self.redis_helper.teardown())
+            run_async(self.redis_helper.teardown())
             logger.info("Redis helper closed")
         self.kafka_helper.teardown()
         logger.info("AI Consumer stopped")
