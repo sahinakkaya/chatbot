@@ -41,7 +41,7 @@ class KnowledgeBase:
         Initialize knowledge base.
 
         Args:
-            data_path: Path to resume-data.json
+            data_path: Path to resume data file (.txt, .md, or .json)
             model_name: Sentence-transformers model name (default: all-MiniLM-L6-v2)
                         This is a small, fast, high-quality model (~80MB)
         """
@@ -60,9 +60,9 @@ class KnowledgeBase:
 
     def load_data(self, data_path: str) -> None:
         """
-        Load resume data from JSON file and create embeddings.
+        Load resume data from file and create embeddings.
 
-        Supports both structured JSON and markdown files.
+        Supports TXT, Markdown, and JSON files. TXT is recommended for simplicity.
         """
         path = Path(data_path)
 
@@ -71,12 +71,12 @@ class KnowledgeBase:
 
         logger.info(f"Loading knowledge base from: {data_path}")
 
-        if path.suffix == ".json":
+        if path.suffix in [".txt", ".md"]:
+            self._load_text(data_path)
+        elif path.suffix == ".json":
             self._load_json(data_path)
-        elif path.suffix == ".md":
-            self._load_markdown(data_path)
         else:
-            raise ValueError(f"Unsupported file format: {path.suffix}")
+            raise ValueError(f"Unsupported file format: {path.suffix}. Use .txt, .md, or .json")
 
         # Create embeddings for all chunks
         self._create_embeddings()
@@ -93,18 +93,69 @@ class KnowledgeBase:
         # Convert structured data into searchable chunks
         self.chunks = self._structure_to_chunks(data)
 
-    def _load_markdown(self, file_path: str) -> None:
-        """Load markdown file and split into chunks"""
-        with open(file_path, "r") as f:
+    def _load_text(self, file_path: str) -> None:
+        """
+        Load text file and split into semantic chunks.
+
+        Chunks are created by:
+        1. Splitting by markdown headers (# SECTION)
+        2. Splitting by double newlines (paragraphs)
+        3. Filtering out very short chunks
+        """
+        with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Split by double newlines (paragraphs)
-        paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
+        chunks = []
+        current_section = ""
+        current_chunk = []
 
-        self.chunks = [
-            {"content": para, "metadata": {"source": "markdown"}}
-            for para in paragraphs
-        ]
+        lines = content.split('\n')
+
+        for line in lines:
+            # Check if it's a markdown header
+            if line.startswith('#'):
+                # Save previous chunk if it exists
+                if current_chunk:
+                    chunk_text = '\n'.join(current_chunk).strip()
+                    if len(chunk_text) > 20:  # Minimum chunk length
+                        chunks.append({
+                            "content": chunk_text,
+                            "metadata": {"section": current_section, "source": "text"}
+                        })
+                    current_chunk = []
+
+                # Update current section
+                current_section = line.lstrip('#').strip()
+                current_chunk.append(line)
+
+            elif line.strip() == '':
+                # Empty line - potential paragraph boundary
+                if current_chunk:
+                    # Check if we have enough content for a chunk
+                    chunk_text = '\n'.join(current_chunk).strip()
+                    if len(chunk_text) > 30:  # Minimum paragraph length
+                        chunks.append({
+                            "content": chunk_text,
+                            "metadata": {"section": current_section, "source": "text"}
+                        })
+                        current_chunk = []
+                    else:
+                        # Keep accumulating if chunk is too small
+                        current_chunk.append(line)
+            else:
+                current_chunk.append(line)
+
+        # Don't forget the last chunk
+        if current_chunk:
+            chunk_text = '\n'.join(current_chunk).strip()
+            if len(chunk_text) > 20:
+                chunks.append({
+                    "content": chunk_text,
+                    "metadata": {"section": current_section, "source": "text"}
+                })
+
+        self.chunks = chunks
+        logger.info(f"Created {len(chunks)} chunks from text file")
 
     def _structure_to_chunks(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """

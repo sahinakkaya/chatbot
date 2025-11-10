@@ -1,0 +1,181 @@
+# PERSONAL INFORMATION
+
+Name: Şahin Akkaya
+His name is Şahin Akkaya.
+Job Title: Fullstack Software Developer
+He is a Fullstack Software Developer.
+Location: İstanbul, Turkey
+He is located in İstanbul, Turkey. He lives in İstanbul, Turkey.
+Email: sahin@sahinakkaya.dev
+Website: https://sahinakkaya.dev
+GitHub: https://github.com/sahinakkaya
+LinkedIn: https://www.linkedin.com/in/sahinakkaya/
+Stack Overflow: https://stackoverflow.com/users/9608759/sahinakkaya
+
+# ABOUT
+
+A free software enthusiast and native Python speaker
+
+# SUMMARY
+
+I enjoy the challenge of solving problems and learn new things. My keen eye for quality and attention to detail ensures excellence in my work. While I hold strong opinions, I show absolute zero resistance to change them based on new evidence. As a fervent advocate of free and open-source software, I actively contribute to it whenever the opportunity arises. I enjoy working with Python and Linux but I don't use this as an excuse for not using other technologies.
+
+# EDUCATION
+
+He graduated from Istanbul Technical University with a Bachelor's Degree in Computer Engineering from 2017 - 2023 in İstanbul, Turkey with a GPA of 2.99/4.00.
+Relevant courses: Artificial Intelligence, Analysis of Algorithms, Functional Programming, Data Structures.
+
+# WORK EXPERIENCE
+
+## Fullstack Software Developer at Ehane
+
+He worked as a Fullstack Software Developer at Ehane.
+Duration: March 2024 - May 2025.
+Location: Remote.
+Type: Full-time.
+Company website: https://ehane.com/.
+Technologies used: Python, FastAPI, SQLAlchemy, Docker, Celery, React Native, Github Actions, PostgreSQL, Linux.
+
+Collaborated on building backend services and APIs with Python, FastAPI and Celery, using SQLAlchemy for database interactions. Containerized apps with Docker, managed PostgreSQL databases, and took part in writing Github Actions for automating CI/CD. Worked with a team to develop cross-platform mobile apps with React Native.
+
+## Software Developer at Ascenix Instruments
+
+He worked as a Software Developer at Ascenix Instruments.
+Duration: December 2022 - January 2024.
+Location: Remote.
+Type: Full-time.
+Company website: https://www.ascenix.systems/.
+Technologies used: React, PHP, Linux.
+
+Developed frontend using React framework. Worked on implementing a custom plugin for Moodle, a free open source learning platform, and deployment of the Moodle instance.
+
+## Embedded Software Engineer at BosphorusISS
+
+He worked as a Embedded Software Engineer at BosphorusISS.
+Duration: April 2022 - June 2022.
+Location: İstanbul, Turkey.
+Type: Internship.
+Company website: https://bosphorusiss.com/.
+Technologies used: C++.
+
+Made a proof of concept work that shows how to reduce load on servers by using shared memory. Worked on exposing CAN bus to Internet.
+
+## DevOps Engineer at Kartaca
+
+He worked as a DevOps Engineer at Kartaca.
+Duration: October 2021 - November 2021.
+Location: İstanbul, Turkey.
+Type: Full-time.
+Company website: https://kartaca.com/.
+Technologies used: OpenLDAP.
+
+Worked on upgrading an LDAP service which is used by company to the latest version.
+
+## Software Application Developer at Kartaca
+
+He worked as a Software Application Developer at Kartaca.
+Duration: June 2021 - August 2021.
+Location: İstanbul, Turkey.
+Type: Internship.
+Company website: https://kartaca.com/.
+Technologies used: Java, Java Spring.
+
+Worked on a Subscription Lifecycle Management System that will integrate to 3rd party apps.
+
+# SKILLS
+
+Programming Languages: Python, C/C++, Java, JavaScript, Go, PHP
+He is proficient in Python, C/C++, Java, JavaScript, Go, PHP.
+
+Frameworks: FastAPI, Django, React, React Native, SQLAlchemy, Java Spring, Vue
+He has experience with FastAPI, Django, React, React Native, SQLAlchemy, Java Spring, Vue.
+
+Technologies: Docker, Git, Linux, Kafka, PostgreSQL, Celery, Github Actions, OpenLDAP, Nginx
+He uses Docker, Git, Linux, Kafka, PostgreSQL, Celery, Github Actions, OpenLDAP, Nginx.
+
+Concepts: Backend Development, Frontend Development, API Development, CI/CD, Database Management, Microservices, WebSockets, GUI Programming, Embedded Systems
+He has expertise in Backend Development, Frontend Development, API Development, CI/CD, Database Management, Microservices, WebSockets, GUI Programming, Embedded Systems.
+
+# PROJECTS
+
+## sahinakkaya.dev
+
+Type: Personal Site
+Self-hosted personal blog and applications including Nextcloud, Jellyfin, Gitea, Invidious and many more. Managed with nginx and various self-hosted services.
+Technologies: Nginx, Jekyll, Linux, Self-hosting
+Link: https://sahinakkaya.dev
+
+## Progress
+
+Type: Side Project
+A full-stack web application for tracking routines with flexible scheduling and progress visualization.
+Technologies: Go, React, Docker
+Link: https://github.com/sahinakkaya/progress
+
+## Blackjack
+
+Type: Side Project
+A multiplayer blackjack game written for fun. Uses WebSockets for communication between players and models the game as finite state machine.
+Technologies: Python, React, Docker, WebSockets
+Link: https://github.com/sahinakkaya/blackjack
+
+## Gitea Contribution
+
+Type: Open Source Contribution
+Implemented a new feature for Gitea which enables users to see contributions for a repository with nice graphs.
+Technologies: Go, Vue, JavaScript, Chart.js
+Link: https://github.com/go-gitea/gitea/pull/27882
+
+## Requests Dashboard
+
+Type: Side Project
+A simple web application that visualizes requests for a toy API over time.
+Technologies: Kafka, Python, Plotly, Django, Docker
+Link: https://github.com/sahinakkaya/requests-dashboard/
+
+## Chess
+
+Type: School Project
+A chess game written in PyQt6 for a school project.
+Technologies: Python, PyQt6, GUI Programming
+Link: https://github.com/sahinakkaya/chess
+
+## RatTrap
+
+Type: Side Project
+GUI for ratslap - mouse configuration tool. Written to easily configure mouse settings on Linux.
+Technologies: Python, PyQt5, GUI Programming
+Link: https://github.com/sahinakkaya/rattrap
+
+## Binary Clock Wallpaper
+
+Type: Side Project
+A Python script to generate wallpaper that shows time in binary format.
+Technologies: Python
+Link: https://github.com/sahinakkaya/binary-clock-wallpaper
+
+## Dotfiles
+
+Type: Configuration
+Highly customized development environment setup. Spent significant time configuring Arch Linux, Vim, and various tools for optimal workflow.
+Technologies: Arch Linux, Vim, Shell Scripting
+Link: https://github.com/sahinakkaya/dotfiles/tree/old-dots
+
+# INTERESTS
+
+- Free and Open Source Software (FOSS)
+- Self-hosting applications
+- Contributing to open source projects
+- Problem solving and learning new technologies
+- Linux system administration
+- Backend architecture and API design
+
+# ADDITIONAL INFORMATION
+
+Open Source: Active contributor to free and open-source software. Notable contribution includes feature implementation for Gitea.
+
+Self Hosting: Manages self-hosted infrastructure including blog, cloud storage, media server, and git server.
+
+Philosophy: Strong advocate for FOSS. Holds strong opinions but remains open to changing them based on new evidence.
+
+Work Style: Keen eye for quality and attention to detail. Comfortable with Python and Linux but not limited to these technologies.
