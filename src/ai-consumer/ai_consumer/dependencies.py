@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
 from ai_consumer.config import settings
+from ai_consumer.rag_helper import RAGHelper
 from kafka_helper import KafkaHelper
 from logger import correlation_id_var
 from openai import OpenAI
@@ -53,7 +54,14 @@ class AIConsumer:
                 "enable_auto_commit": True,
             }
         )
-        self.system_prompt = self.build_system_prompt()
+
+        # Initialize RAG system
+        self.rag_helper = RAGHelper(
+            model_name=settings.rag_model_name,
+            chunk_size=settings.rag_chunk_size,
+            chunk_overlap=settings.rag_chunk_overlap,
+        )
+        self.rag_helper.initialize_from_file(settings.context_file_path)
 
         self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
         self.executor = ThreadPoolExecutor(max_workers=settings.max_workers)
@@ -62,7 +70,7 @@ class AIConsumer:
         self.redis_helper = RedisHelper(settings)
 
         logger.info(
-            f"AI Consumer initialized with {settings.max_workers} worker threads and Redis chat history"
+            f"AI Consumer initialized with {settings.max_workers} worker threads, RAG system, and Redis chat history"
         )
 
     async def get_conversation_history(self, userid: str) -> list[dict]:
@@ -125,20 +133,6 @@ class AIConsumer:
         """Sync wrapper for async process_message - used by ThreadPoolExecutor"""
         run_async(self.process_message(message))
 
-    def build_system_prompt(self) -> str:
-        with open(settings.context_file_path) as f:
-            context = f.read()
-        return f"""You are a helpful AI assistant answering questions about a Şahin Akkaya's professional background, skills, and experience.
-
-Be concise, friendly, and professional. Keep responses under 3-4 sentences unless more detail is specifically requested.
-
-Use the following information to answer questions. Only answer based on this context. If the information is not in the context, politely say that you don't have that information.
-
-Context:
-{context}
-
-Remember: Be concise, friendly, and only answer based on the provided context."""
-
     async def process_message(self, message):
         """Process a single message with error handling"""
         userid = message.get("userid")
@@ -189,13 +183,42 @@ Remember: Be concise, friendly, and only answer based on the provided context.""
             # history = await self.get_conversation_history(userid)
             history = []
 
+            # Retrieve relevant context chunks using RAG
+            relevant_chunks = self.rag_helper.retrieve_relevant_chunks(
+                query=content,
+                top_k=settings.rag_top_k,
+                min_similarity=settings.rag_min_similarity,
+            )
+
+            # Build system prompt with relevant context
+            if relevant_chunks:
+                context_text = "\n\n".join(relevant_chunks)
+                system_content = f"""You are Şahin Akkaya, a fullstack software developer. Answer questions as if you are Şahin speaking directly. Use first-person ("I", "my", "me") in all responses.
+
+Be concise, friendly, and professional. Keep responses under 3-4 sentences unless more detail is specifically requested.
+
+IMPORTANT: Answer the question directly without any closing phrases like "feel free to ask", "let me know if you need more information", or "if you have any questions". Just provide the answer and stop.
+
+Use the following information to answer questions. Only answer based on this context. If the information is not in the context, politely say that you don't have that information.
+
+Context:
+{context_text}
+
+Remember: Be concise, friendly, and only answer based on the provided context.
+"""
+            else:
+                system_content = """You are Şahin Akkaya, a fullstack software developer. Answer questions as if you are Şahin speaking directly. Use first-person ("I", "my", "me") in all responses.
+
+Be concise, friendly, and professional. Keep responses under 3-4 sentences unless more detail is specifically requested.
+
+IMPORTANT: Answer the question directly without any closing phrases like "feel free to ask", "let me know if you need more information", or "if you have any questions". Just provide the answer and stop.
+
+
+
+Be concise, friendly, and professional. I don't have specific context available right now, so I can only provide general responses."""
+
             # Build messages array with system message, history, and new user message
-            messages = [
-                {
-                    "role": "system",
-                    "content": self.system_prompt,
-                }
-            ]
+            messages = [{"role": "system", "content": system_content}]
 
             # Add conversation history
             messages.extend(history)
@@ -203,8 +226,9 @@ Remember: Be concise, friendly, and only answer based on the provided context.""
             # Add current user message
             messages.append({"role": "user", "content": content})
 
+
             logger.debug(
-                f"Sending to OpenAI with {len(history)} historical messages for user {userid}"
+                f"Sending to OpenAI with {len(history)} historical messages and {len(relevant_chunks)} context chunks for user {userid}"
             )
 
             response = self.openai_client.chat.completions.create(
