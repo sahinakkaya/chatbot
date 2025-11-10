@@ -1,14 +1,15 @@
+import asyncio
 import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
-import redis
 from ai_consumer.config import settings
 from kafka_helper import KafkaHelper
 from logger import correlation_id_var
 from openai import OpenAI
+from redis_helper import RedisHelper
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -33,22 +34,18 @@ class AIConsumer:
         self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
         self.executor = ThreadPoolExecutor(max_workers=settings.max_workers)
 
-        # Initialize Redis client for chat history
-        self.redis_client = redis.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            decode_responses=True,
-        )
+        # Initialize Redis helper for chat history
+        self.redis_helper = RedisHelper(settings)
 
         logger.info(
             f"AI Consumer initialized with {settings.max_workers} worker threads and Redis chat history"
         )
 
-    def get_conversation_history(self, userid: str) -> list[dict]:
+    async def get_conversation_history(self, userid: str) -> list[dict]:
         """Retrieve conversation history for a user from Redis"""
         try:
             history_key = f"chat_history:{userid}"
-            history_json = self.redis_client.get(history_key)
+            history_json = await self.redis_helper.get(history_key)
 
             if history_json:
                 history = json.loads(history_json)
@@ -65,7 +62,7 @@ class AIConsumer:
             )
             return []
 
-    def update_conversation_history(
+    async def update_conversation_history(
         self, userid: str, user_message: str, ai_response: str
     ):
         """Update conversation history in Redis with new message exchange"""
@@ -73,7 +70,7 @@ class AIConsumer:
             history_key = f"chat_history:{userid}"
 
             # Get existing history
-            history = self.get_conversation_history(userid)
+            history = await self.get_conversation_history(userid)
 
             # Add new messages
             history.append({"role": "user", "content": user_message})
@@ -87,7 +84,7 @@ class AIConsumer:
                 history = history[-max_messages:]
 
             # Store updated history with TTL
-            self.redis_client.set(
+            await self.redis_helper.set(
                 history_key,
                 json.dumps(history),
                 ex=settings.chat_history_ttl,
@@ -111,11 +108,12 @@ class AIConsumer:
         correlation_id_var.set(correlation_id)
 
         try:
-            ai_response = self.process_with_openai(userid, content)
+            # Run async operation in sync context
+            ai_response = asyncio.run(self.process_with_openai(userid, content))
             processing_time = time.time() - start_time
 
             # Update conversation history after successful response
-            self.update_conversation_history(userid, content, ai_response)
+            asyncio.run(self.update_conversation_history(userid, content, ai_response))
 
             response_message = {
                 "type": "response",
@@ -143,12 +141,12 @@ class AIConsumer:
         wait=wait_exponential(),
         reraise=True,
     )
-    def process_with_openai(self, userid: str, content: str):
+    async def process_with_openai(self, userid: str, content: str):
         model = "gpt-3.5-turbo"
 
         try:
             # Get conversation history for the user
-            history = self.get_conversation_history(userid)
+            history = await self.get_conversation_history(userid)
 
             # Build messages array with system message, history, and new user message
             messages = [
@@ -190,6 +188,9 @@ class AIConsumer:
         """Consume messages from Kafka and process them concurrently"""
         logger.info("Starting AI Consumer service with concurrent processing")
 
+        # Initialize Redis helper
+        asyncio.run(self.redis_helper.initialize())
+
         assert self.kafka_helper.consumer is not None, "Kafka consumer not initialized"
         try:
             for message in self.kafka_helper.consumer:
@@ -212,8 +213,8 @@ class AIConsumer:
         if self.executor:
             logger.info("Waiting for worker threads to complete...")
             self.executor.shutdown(wait=True, cancel_futures=False)
-        if self.redis_client:
-            self.redis_client.close()
-            logger.info("Redis client closed")
+        if self.redis_helper:
+            asyncio.run(self.redis_helper.teardown())
+            logger.info("Redis helper closed")
         self.kafka_helper.teardown()
         logger.info("AI Consumer stopped")
