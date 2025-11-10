@@ -20,7 +20,13 @@ class Settings(BaseSettings):
     chat_history_max_messages: int = 20  # Maximum number of messages to keep in history, should be even number to keep pairs of user/assistant messages
     chat_history_ttl: int = 3600  # Time to live for chat history in seconds (1 hour)
 
+    # RAG (Retrieval-Augmented Generation)
     context_file_path: str = "./resume-data.txt"
+    rag_model_name: str = "multi-qa-mpnet-base-dot-v1"  # Sentence-transformers model for embeddings
+    rag_chunk_size: int = 500  # Number of characters per chunk
+    rag_chunk_overlap: int = 50  # Overlapping characters between chunks
+    rag_top_k: int = 3  # Number of relevant chunks to retrieve per query
+    rag_min_similarity: float = 0.0  # Minimum similarity score to include a chunk (0-1)
 
     # logging
     log_level: str = "INFO"
