@@ -1,5 +1,7 @@
+import asyncio
 import json
 import logging
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -17,6 +19,28 @@ from tenacity import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Thread-local storage for event loops
+_thread_local = threading.local()
+
+
+def get_event_loop():
+    """Get or create an event loop for the current thread"""
+    try:
+        loop = _thread_local.loop
+        if loop.is_closed():
+            raise AttributeError
+    except AttributeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        _thread_local.loop = loop
+    return loop
+
+
+def run_async(coro):
+    """Run an async coroutine in the thread's event loop"""
+    loop = get_event_loop()
+    return loop.run_until_complete(coro)
 
 
 class AIConsumer:
@@ -97,6 +121,10 @@ class AIConsumer:
                 f"Failed to update conversation history for user {userid}: {str(e)}"
             )
 
+    def process_message_sync(self, message):
+        """Sync wrapper for async process_message - used by ThreadPoolExecutor"""
+        run_async(self.process_message(message))
+
     async def process_message(self, message):
         """Process a single message with error handling"""
         userid = message.get("userid")
@@ -107,7 +135,6 @@ class AIConsumer:
         correlation_id_var.set(correlation_id)
 
         try:
-            # Run async operation in thread-local event loop
             ai_response = await self.process_with_openai(userid, content)
             processing_time = time.time() - start_time
 
@@ -197,8 +224,8 @@ class AIConsumer:
 
                 logger.info(f"Received message: {message.value}")
 
-                # Submit to thread pool for concurrent processing
-                self.executor.submit(self.process_message, message.value)
+                # Submit sync wrapper to thread pool for concurrent processing
+                self.executor.submit(self.process_message_sync, message.value)
 
         except KeyboardInterrupt:
             logger.info("Shutting down AI Consumer")
