@@ -1,7 +1,5 @@
-import asyncio
 import json
 import logging
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -19,28 +17,6 @@ from tenacity import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Thread-local storage for event loops
-_thread_local = threading.local()
-
-
-def get_event_loop():
-    """Get or create an event loop for the current thread"""
-    try:
-        loop = _thread_local.loop
-        if loop.is_closed():
-            raise AttributeError
-    except AttributeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        _thread_local.loop = loop
-    return loop
-
-
-def run_async(coro):
-    """Run an async coroutine in the thread's event loop"""
-    loop = get_event_loop()
-    return loop.run_until_complete(coro)
 
 
 class AIConsumer:
@@ -121,7 +97,7 @@ class AIConsumer:
                 f"Failed to update conversation history for user {userid}: {str(e)}"
             )
 
-    def process_message(self, message):
+    async def process_message(self, message):
         """Process a single message with error handling"""
         userid = message.get("userid")
         content = message.get("content")
@@ -132,11 +108,11 @@ class AIConsumer:
 
         try:
             # Run async operation in thread-local event loop
-            ai_response = run_async(self.process_with_openai(userid, content))
+            ai_response = await self.process_with_openai(userid, content)
             processing_time = time.time() - start_time
 
             # Update conversation history after successful response
-            run_async(self.update_conversation_history(userid, content, ai_response))
+            await self.update_conversation_history(userid, content, ai_response)
 
             response_message = {
                 "type": "response",
@@ -207,12 +183,11 @@ class AIConsumer:
             logger.error(f"OpenAI API error: {str(e)}", extra={"error": str(e)})
             raise
 
-    def consume(self):
+    async def consume(self):
         """Consume messages from Kafka and process them concurrently"""
         logger.info("Starting AI Consumer service with concurrent processing")
 
-        # Initialize Redis helper in main thread's event loop
-        run_async(self.redis_helper.initialize())
+        await self.redis_helper.initialize()
 
         assert self.kafka_helper.consumer is not None, "Kafka consumer not initialized"
         try:
@@ -230,14 +205,14 @@ class AIConsumer:
         except Exception as e:
             logger.error(f"Consumer error: {str(e)}", extra={"error": str(e)})
         finally:
-            self.cleanup()
+            await self.cleanup()
 
-    def cleanup(self):
+    async def cleanup(self):
         if self.executor:
             logger.info("Waiting for worker threads to complete...")
             self.executor.shutdown(wait=True, cancel_futures=False)
         if self.redis_helper:
-            run_async(self.redis_helper.teardown())
+            await self.redis_helper.teardown()
             logger.info("Redis helper closed")
         self.kafka_helper.teardown()
         logger.info("AI Consumer stopped")
