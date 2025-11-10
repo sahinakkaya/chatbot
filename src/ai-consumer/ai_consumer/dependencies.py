@@ -100,7 +100,6 @@ class AIConsumer:
             history.append({"role": "assistant", "content": ai_response})
 
             # Trim history to max_messages (keep only the most recent messages)
-            # Keep pairs of user/assistant messages, so ensure even number
             max_messages = settings.chat_history_max_messages
             if len(history) > max_messages:
                 # Keep the most recent messages
