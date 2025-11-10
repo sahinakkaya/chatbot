@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     # Concurrency
     max_workers: int = 50  # Number of concurrent OpenAI API calls
 
+    # Chat History
+    chat_history_max_messages: int = 20  # Maximum number of messages to keep in history, should be even number to keep pairs of user/assistant messages
+    chat_history_ttl: int = 3600  # Time to live for chat history in seconds (1 hour)
+
     # logging
     log_level: str = "INFO"
     app_name: str = "ai-consumer"
