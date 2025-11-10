@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # Knowledge Base / RAG
     knowledge_base_path: str ="./resume-data.json"
     rag_max_chunks: int = 3  # Number of context chunks to retrieve
-    rag_confidence_threshold: float = 0.3  # Minimum similarity score
+    rag_confidence_threshold: float = 0.25  # Minimum similarity score (lower = more permissive)
 
     # Response Caching
     enable_caching: bool = True

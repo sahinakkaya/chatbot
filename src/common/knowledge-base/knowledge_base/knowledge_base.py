@@ -110,50 +110,186 @@ class KnowledgeBase:
         """
         Convert structured resume JSON into searchable text chunks.
 
-        Creates semantic chunks that can answer specific questions.
+        Creates natural language chunks that match well with questions.
         """
         chunks = []
 
         # Process each section of the resume
         for key, value in data.items():
             if isinstance(value, dict):
-                # Nested structure (e.g., personal info, contact)
-                chunk_content = f"{key}: " + ", ".join(
-                    f"{k}: {v}" for k, v in value.items() if v
-                )
-                chunks.append(
-                    {
+                # Nested structure (e.g., personal info, contact, skills)
+                # Create natural language chunks for better semantic matching
+                if key == "personal":
+                    for k, v in value.items():
+                        if k == "name":
+                            chunks.append({
+                                "content": f"The person's name is {v}. His name is {v}.",
+                                "metadata": {"section": key, "field": k, "type": "info"}
+                            })
+                        elif k == "location":
+                            chunks.append({
+                                "content": f"He is located in {v}. He lives in {v}. His location is {v}.",
+                                "metadata": {"section": key, "field": k, "type": "info"}
+                            })
+                        elif k == "title":
+                            chunks.append({
+                                "content": f"He is a {v}. His job title is {v}. He works as a {v}.",
+                                "metadata": {"section": key, "field": k, "type": "info"}
+                            })
+                        elif k in ["email", "website", "github", "linkedin", "stackoverflow"]:
+                            chunks.append({
+                                "content": f"His {k} is {v}. You can find him at {v}.",
+                                "metadata": {"section": key, "field": k, "type": "info"}
+                            })
+                elif key == "skills":
+                    # Special handling for skills - create natural language chunks
+                    all_skills = []
+                    for category, skill_list in value.items():
+                        if isinstance(skill_list, list):
+                            skills_str = ", ".join(skill_list)
+                            chunks.append({
+                                "content": f"His {category} include: {skills_str}. He has experience with {skills_str}.",
+                                "metadata": {"section": key, "category": category, "type": "info"}
+                            })
+                            all_skills.extend(skill_list)
+
+                    # Also create a general skills chunk
+                    if all_skills:
+                        chunks.append({
+                            "content": f"His technical skills include: {', '.join(all_skills)}. He is proficient in {', '.join(all_skills[:5])}.",
+                            "metadata": {"section": key, "type": "info"}
+                        })
+                else:
+                    # Generic dict handling
+                    chunk_content = f"{key}: " + ", ".join(
+                        f"{k}: {v}" for k, v in value.items() if v
+                    )
+                    chunks.append({
                         "content": chunk_content,
                         "metadata": {"section": key, "type": "info"},
-                    }
-                )
+                    })
 
             elif isinstance(value, list):
                 # List items (e.g., experience, education, skills)
                 for idx, item in enumerate(value):
                     if isinstance(item, dict):
-                        # Convert dict to readable text
-                        chunk_content = f"{key}: " + ". ".join(
-                            f"{k}: {v}" for k, v in item.items() if v
-                        )
+                        # Special handling for education
+                        if key == "education":
+                            school = item.get("school", "")
+                            degree = item.get("degree", "")
+                            duration = item.get("duration", "")
+                            location = item.get("location", "")
+                            gpa = item.get("gpa", "")
+                            courses = item.get("courses", "")
+
+                            # Create natural language chunk
+                            parts = []
+                            if school and degree:
+                                parts.append(f"He graduated from {school} with a {degree}")
+                            elif school:
+                                parts.append(f"He studied at {school}")
+
+                            if duration:
+                                parts.append(f"from {duration}")
+
+                            if location:
+                                parts.append(f"in {location}")
+
+                            if gpa:
+                                parts.append(f"with a GPA of {gpa}")
+
+                            if courses:
+                                parts.append(f"His relevant courses included {courses}")
+
+                            chunk_content = ". ".join(parts) + "."
+
+                        # Special handling for experience
+                        elif key == "experience":
+                            title = item.get("title", "")
+                            company = item.get("company", "")
+                            duration = item.get("duration", "")
+                            location = item.get("location", "")
+                            work_type = item.get("type", "")
+                            technologies = item.get("technologies", "")
+                            description = item.get("description", "")
+
+                            parts = []
+                            if title and company:
+                                parts.append(f"He worked as a {title} at {company}")
+
+                            if duration:
+                                parts.append(f"from {duration}")
+
+                            if location:
+                                parts.append(f"({location})")
+
+                            if work_type:
+                                parts.append(f"This was a {work_type} position")
+
+                            if technologies:
+                                parts.append(f"Technologies used: {technologies}")
+
+                            if description:
+                                parts.append(f"{description}")
+
+                            chunk_content = ". ".join(parts) + "."
+
+                        # Special handling for projects
+                        elif key == "projects":
+                            name = item.get("name", "")
+                            description = item.get("description", "")
+                            technologies = item.get("technologies", "")
+                            project_type = item.get("type", "")
+                            link = item.get("link", "")
+
+                            parts = []
+                            if name:
+                                parts.append(f"Project: {name}")
+
+                            if project_type:
+                                parts.append(f"({project_type})")
+
+                            if description:
+                                parts.append(description)
+
+                            if technologies:
+                                parts.append(f"Built with: {technologies}")
+
+                            if link:
+                                parts.append(f"Link: {link}")
+
+                            chunk_content = ". ".join(parts) + "."
+
+                        else:
+                            # Generic dict handling
+                            chunk_content = f"{key}: " + ". ".join(
+                                f"{k}: {v}" for k, v in item.items() if v
+                            )
                     else:
                         chunk_content = f"{key}: {item}"
 
-                    chunks.append(
-                        {
-                            "content": chunk_content,
-                            "metadata": {"section": key, "index": idx, "type": "list"},
-                        }
-                    )
+                    chunks.append({
+                        "content": chunk_content,
+                        "metadata": {"section": key, "index": idx, "type": "list"},
+                    })
 
             elif isinstance(value, str):
-                # Simple string values
-                chunks.append(
-                    {
+                # Simple string values with natural language
+                if key == "about":
+                    chunks.append({
+                        "content": f"About him: {value}. He is {value}.",
+                        "metadata": {"section": key, "type": "text"},
+                    })
+                elif key == "summary":
+                    chunks.append({
+                        "content": f"Summary: {value}",
+                        "metadata": {"section": key, "type": "text"},
+                    })
+                else:
+                    chunks.append({
                         "content": f"{key}: {value}",
                         "metadata": {"section": key, "type": "text"},
-                    }
-                )
+                    })
 
         return chunks
 
@@ -173,7 +309,7 @@ class KnowledgeBase:
         )
         logger.info("Embeddings created successfully")
 
-    def search(self, query: str, top_k: int = 3, threshold: float = 0.3) -> List[RetrievalResult]:
+    def search(self, query: str, top_k: int = 3, threshold: float = 0.25) -> List[RetrievalResult]:
         """
         Search knowledge base for relevant information.
 
@@ -198,11 +334,17 @@ class KnowledgeBase:
         )
 
         # Get top-k results above threshold
-        top_indices = np.argsort(similarities)[::-1][:top_k]
+        top_indices = np.argsort(similarities)[::-1][:top_k * 2]  # Get more candidates
         results = []
 
-        for idx in top_indices:
+        # Log top scores for debugging
+        logger.debug(f"Query: '{query}'")
+        logger.debug(f"Top 5 similarity scores: {[float(similarities[i]) for i in top_indices[:5]]}")
+
+        for idx in top_indices[:top_k]:
             score = float(similarities[idx])
+            logger.debug(f"Candidate chunk (score={score:.3f}): {self.chunks[idx]['content'][:100]}...")
+
             if score >= threshold:
                 results.append(
                     RetrievalResult(
@@ -212,14 +354,19 @@ class KnowledgeBase:
                     )
                 )
 
-        logger.info(
-            f"Search for '{query}' returned {len(results)} results (threshold: {threshold})"
-        )
+        if results:
+            logger.info(
+                f"Search for '{query}' returned {len(results)} results with scores: {[f'{r.score:.3f}' for r in results]}"
+            )
+        else:
+            logger.warning(
+                f"Search for '{query}' returned 0 results. Top score was {float(similarities[top_indices[0]]):.3f}, threshold is {threshold}"
+            )
 
         return results
 
     def get_context_for_query(
-        self, query: str, max_chunks: int = 3, threshold: float = 0.3
+        self, query: str, max_chunks: int = 3, threshold: float = 0.25
     ) -> tuple[str, float]:
         """
         Get formatted context string for AI prompt.
