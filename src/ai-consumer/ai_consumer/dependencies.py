@@ -95,9 +95,9 @@ class AIConsumer:
         try:
             # Check cache first (synchronous - using Redis client directly)
             cached_response = None
-            if self.redis_helper.client and settings.enable_caching:
+            if self.redis_helper.redis_client and settings.enable_caching:
                 cache_key = self._get_cache_key(content)
-                cached_response = self.redis_helper.client.get(cache_key)
+                cached_response = self.redis_helper.redis_client.get(cache_key)
                 if cached_response:
                     logger.info(f"Cache hit for question: {content[:50]}...")
                     ai_response = cached_response
@@ -122,9 +122,9 @@ class AIConsumer:
             processing_time = time.time() - start_time
 
             # Cache the response
-            if self.redis_helper.client and settings.enable_caching:
+            if self.redis_helper.redis_client and settings.enable_caching:
                 cache_key = self._get_cache_key(content)
-                self.redis_helper.client.setex(
+                self.redis_helper.redis_client.setex(
                     cache_key, settings.cache_ttl_seconds, ai_response
                 )
                 logger.debug(f"Cached response for: {content[:50]}...")

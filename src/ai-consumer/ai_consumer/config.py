@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     max_workers: int = 50  # Number of concurrent OpenAI API calls
 
     # Knowledge Base / RAG
-    knowledge_base_path: str = "/app/data/resume-data.json"
+    knowledge_base_path: str ="./resume-data.json"
     rag_max_chunks: int = 3  # Number of context chunks to retrieve
     rag_confidence_threshold: float = 0.3  # Minimum similarity score
 
