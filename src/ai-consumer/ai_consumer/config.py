@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     chat_history_max_messages: int = 20  # Maximum number of messages to keep in history, should be even number to keep pairs of user/assistant messages
     chat_history_ttl: int = 3600  # Time to live for chat history in seconds (1 hour)
 
+    context_file_path: str = "./resume-data.txt"
+
     # logging
     log_level: str = "INFO"
     app_name: str = "ai-consumer"

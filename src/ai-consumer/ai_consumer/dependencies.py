@@ -53,6 +53,7 @@ class AIConsumer:
                 "enable_auto_commit": True,
             }
         )
+        self.system_prompt = self.build_system_prompt()
 
         self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
         self.executor = ThreadPoolExecutor(max_workers=settings.max_workers)
@@ -124,6 +125,20 @@ class AIConsumer:
         """Sync wrapper for async process_message - used by ThreadPoolExecutor"""
         run_async(self.process_message(message))
 
+    def build_system_prompt(self) -> str:
+        with open(settings.context_file_path) as f:
+            context = f.read()
+        return f"""You are a helpful AI assistant answering questions about a Şahin Akkaya's professional background, skills, and experience.
+
+Be concise, friendly, and professional. Keep responses under 3-4 sentences unless more detail is specifically requested.
+
+Use the following information to answer questions. Only answer based on this context. If the information is not in the context, politely say that you don't have that information.
+
+Context:
+{context}
+
+Remember: Be concise, friendly, and only answer based on the provided context."""
+
     async def process_message(self, message):
         """Process a single message with error handling"""
         userid = message.get("userid")
@@ -177,7 +192,7 @@ class AIConsumer:
             messages = [
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant. Provide concise and friendly responses.",
+                    "content": self.system_prompt,
                 }
             ]
 
