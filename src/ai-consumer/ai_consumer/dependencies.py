@@ -153,7 +153,7 @@ Remember: Be concise, friendly, and only answer based on the provided context.""
             processing_time = time.time() - start_time
 
             # Update conversation history after successful response
-            await self.update_conversation_history(userid, content, ai_response)
+            # await self.update_conversation_history(userid, content, ai_response)
 
             response_message = {
                 "type": "response",
@@ -186,7 +186,8 @@ Remember: Be concise, friendly, and only answer based on the provided context.""
 
         try:
             # Get conversation history for the user
-            history = await self.get_conversation_history(userid)
+            # history = await self.get_conversation_history(userid)
+            history = []
 
             # Build messages array with system message, history, and new user message
             messages = [
