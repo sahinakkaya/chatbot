@@ -26,5 +26,8 @@ class Settings(BaseSettings):
     user_rate_limit_max_requests: int = 10
     user_rate_limit_window_seconds: int = 60
 
+    # Cloudflare Turnstile settings
+    turnstile_secret_key: str = ""
+
 
 settings = Settings()

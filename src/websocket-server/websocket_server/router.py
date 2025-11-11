@@ -1,10 +1,11 @@
 import logging
 import time
 
-from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
 from websocket_server.config import settings
 from websocket_server.handlers.websocket_handler import WebSocketHandler
-from websocket_server.schemas import UserId
+from websocket_server.schemas import TokenRequest, UserId
+from websocket_server.security import verify_turnstile
 from websocket_server.util import (
     generate_token,
     get_valid_user_id,
@@ -63,7 +64,27 @@ async def root():
 
 
 @router.post("/token")
-async def generate_token_for_user(userid: str = Depends(get_valid_user_id)):
-    """Generate authentication token for user"""
+async def generate_token_for_user(
+    request: Request,
+    token_request: TokenRequest,
+    userid: UserId = Depends(get_valid_user_id),
+):
+    """Generate authentication token for user after Turnstile verification"""
+    # Extract client IP for Turnstile verification
+    client_ip = request.client.host if request.client else None
+
+    # Verify Turnstile token
+    is_valid = await verify_turnstile(token_request.captcha, client_ip)
+    if not is_valid:
+        logger.warning(
+            f"Turnstile verification failed for userid={userid.userid}, ip={client_ip}"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Security verification failed. Please try again.",
+        )
+
+    # Generate authentication token
     token = await generate_token(userid.userid)
+    logger.info(f"Token generated for userid={userid.userid}")
     return {"token": token, "userid": userid.userid, "expires_in": 3600}

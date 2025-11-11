@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.118.0",
+    "httpx>=0.28.1",
     "kafka-helper",
     "logger",
     "pydantic>=2.11.9",

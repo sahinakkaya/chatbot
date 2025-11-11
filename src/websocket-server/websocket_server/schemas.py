@@ -11,6 +11,10 @@ class UserId(BaseModel):
     userid: UUID = Field(description="User ID associated with the token")
 
 
+class TokenRequest(BaseModel):
+    captcha: str = Field(description="Cloudflare Turnstile token", min_length=1)
+
+
 class UrlParams(BaseModel):
     userid: str = Field(description="User ID associated with the token")
     token: str = Field(
