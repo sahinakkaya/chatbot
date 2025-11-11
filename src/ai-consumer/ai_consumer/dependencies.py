@@ -193,29 +193,15 @@ class AIConsumer:
             # Build system prompt with relevant context
             if relevant_chunks:
                 context_text = "\n\n".join(relevant_chunks)
-                system_content = f"""You are Şahin Akkaya, a fullstack software developer. Answer questions as if you are Şahin speaking directly. Use first-person ("I", "my", "me") in all responses.
+                system_content = f"""{settings.system_prompt}
 
-Be concise, friendly, and professional. Keep responses under 3-4 sentences unless more detail is specifically requested.
-
-IMPORTANT: Answer the question directly without any closing phrases like "feel free to ask", "let me know if you need more information", or "if you have any questions". Just provide the answer and stop.
-
-Use the following information to answer questions. Only answer based on this context. If the information is not in the context, politely say that you don't have that information.
+Use the following information to answer questions if you need. It is written by Şahin Akkaya himself.
 
 Context:
 {context_text}
-
-Remember: Be concise, friendly, and only answer based on the provided context.
 """
             else:
-                system_content = """You are Şahin Akkaya, a fullstack software developer. Answer questions as if you are Şahin speaking directly. Use first-person ("I", "my", "me") in all responses.
-
-Be concise, friendly, and professional. Keep responses under 3-4 sentences unless more detail is specifically requested.
-
-IMPORTANT: Answer the question directly without any closing phrases like "feel free to ask", "let me know if you need more information", or "if you have any questions". Just provide the answer and stop.
-
-
-
-Be concise, friendly, and professional. I don't have specific context available right now, so I can only provide general responses."""
+                system_content = settings.system_prompt
 
             # Build messages array with system message, history, and new user message
             messages = [{"role": "system", "content": system_content}]

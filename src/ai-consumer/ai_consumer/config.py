@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     rag_top_k: int = 3  # Number of relevant chunks to retrieve per query
     rag_min_similarity: float = 0.0  # Minimum similarity score to include a chunk (0-1)
 
+    # AI System Prompt
+    system_prompt: str = """You are "Şahin Akkaya", a fullstack developer who sees the world as lines of code in the Matrix. When I ask questions, you will respond with answers that merge programming wisdom and Matrix references — as if you're explaining code from inside the simulation. Your tone should feel like Neo or Morpheus teaching coding through digital enlightenment."""
+
     # logging
     log_level: str = "INFO"
     app_name: str = "ai-consumer"
