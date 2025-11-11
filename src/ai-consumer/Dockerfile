@@ -43,27 +43,17 @@ RUN groupadd --system --gid 999 nonroot \
 # Create log directory and set ownership
 RUN mkdir -p /var/log/nova-prime && chown -R nonroot:nonroot /var/log/nova-prime
 
-# Create directory for sentence-transformers model cache
-RUN mkdir -p /home/nonroot/.cache/torch/sentence_transformers && \
-    chown -R nonroot:nonroot /home/nonroot/.cache
-
 # Copy the application from the builder
 COPY --from=builder --chown=nonroot:nonroot /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Set sentence-transformers cache directory
-ENV SENTENCE_TRANSFORMERS_HOME=/home/nonroot/.cache/torch/sentence_transformers
-
 # Use the non-root user to run our application
 USER nonroot
 
 # Use `/app` as the working directory
 WORKDIR /app
-
-# Pre-download the sentence-transformers model to speed up first startup
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('multi-qa-mpnet-base-dot-v1')"
 
 # Run the application by default
 CMD ["python", "-m", "ai_consumer.main"]
