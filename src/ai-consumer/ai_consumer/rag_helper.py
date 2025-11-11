@@ -2,17 +2,18 @@ import logging
 from typing import List
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
 
 class RAGHelper:
-    """Helper class for Retrieval-Augmented Generation using sentence-transformers"""
+    """Helper class for Retrieval-Augmented Generation using OpenAI embeddings"""
 
     def __init__(
         self,
-        model_name: str = "multi-qa-mpnet-base-dot-v1",
+        openai_client: OpenAI,
+        embedding_model: str = "text-embedding-3-large",
         chunk_size: int = 500,
         chunk_overlap: int = 50,
     ):
@@ -20,12 +21,14 @@ class RAGHelper:
         Initialize RAG helper with embedding model and chunking parameters
 
         Args:
-            model_name: Name of the sentence-transformers model
+            openai_client: OpenAI client instance for making API calls
+            embedding_model: Name of the OpenAI embedding model
             chunk_size: Number of characters per chunk
             chunk_overlap: Number of overlapping characters between chunks
         """
-        logger.info(f"Loading embedding model: {model_name}")
-        self.model = SentenceTransformer(model_name)
+        logger.info(f"Using OpenAI embedding model: {embedding_model}")
+        self.openai_client = openai_client
+        self.embedding_model = embedding_model
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.chunks: List[str] = []
@@ -92,11 +95,16 @@ class RAGHelper:
         # Chunk the text
         self.chunks = self.chunk_text(text)
 
-        # Create embeddings for all chunks
+        # Create embeddings for all chunks using OpenAI
         logger.info(f"Creating embeddings for {len(self.chunks)} chunks")
-        self.embeddings = self.model.encode(
-            self.chunks, convert_to_numpy=True, show_progress_bar=False
+        response = self.openai_client.embeddings.create(
+            model=self.embedding_model,
+            input=self.chunks
         )
+
+        # Extract embeddings from response and convert to numpy array
+        self.embeddings = np.array([item.embedding for item in response.data])
+
         logger.info(
             f"RAG initialized with {len(self.chunks)} chunks, embedding dimension: {self.embeddings.shape[1]}"
         )
@@ -110,7 +118,7 @@ class RAGHelper:
         Args:
             query: The user's question
             top_k: Number of top chunks to retrieve
-            min_similarity: Minimum similarity score (0-1) to include a chunk
+            min_similarity: Minimum similarity score (-1 to 1) to include a chunk
 
         Returns:
             List of relevant text chunks
@@ -119,14 +127,19 @@ class RAGHelper:
             logger.warning("No chunks available for retrieval")
             return []
 
-        # Encode the query
-        query_embedding = self.model.encode(
-            query, convert_to_numpy=True, show_progress_bar=False
+        # Get query embedding from OpenAI
+        response = self.openai_client.embeddings.create(
+            model=self.embedding_model,
+            input=query
         )
+        query_embedding = np.array(response.data[0].embedding)
 
-        # Calculate cosine similarity (dot product for normalized vectors)
-        # multi-qa-mpnet-base-dot-v1 uses dot product similarity
-        similarities = np.dot(self.embeddings, query_embedding)
+        # Normalize embeddings for cosine similarity
+        query_norm = query_embedding / np.linalg.norm(query_embedding)
+        embeddings_norm = self.embeddings / np.linalg.norm(self.embeddings, axis=1, keepdims=True)
+
+        # Calculate cosine similarity using dot product of normalized vectors
+        similarities = np.dot(embeddings_norm, query_norm)
 
         # Get top-k indices
         top_indices = np.argsort(similarities)[::-1][:top_k]

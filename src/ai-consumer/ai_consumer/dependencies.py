@@ -55,15 +55,16 @@ class AIConsumer:
             }
         )
 
-        # Initialize RAG system
+        self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
+
+        # Initialize RAG system with OpenAI client
         self.rag_helper = RAGHelper(
-            model_name=settings.rag_model_name,
+            openai_client=self.openai_client,
+            embedding_model=settings.rag_embedding_model,
             chunk_size=settings.rag_chunk_size,
             chunk_overlap=settings.rag_chunk_overlap,
         )
         self.rag_helper.initialize_from_file(settings.context_file_path)
-
-        self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
         self.executor = ThreadPoolExecutor(max_workers=settings.max_workers)
 
         # Initialize Redis helper for chat history

@@ -16,6 +16,13 @@ class TestAIConsumer:
             mock_settings.max_workers = 5
             mock_settings.consume_topic = "incoming_messages"
             mock_settings.produce_topic = "responses"
+            mock_settings.context_file_path = "./resume-data.txt"
+            mock_settings.rag_embedding_model = "text-embedding-3-large"
+            mock_settings.rag_chunk_size = 500
+            mock_settings.rag_chunk_overlap = 50
+            mock_settings.rag_top_k = 3
+            mock_settings.rag_min_similarity = 0.0
+            mock_settings.system_prompt = "Test system prompt"
             yield mock_settings
 
     @pytest.fixture
@@ -25,11 +32,15 @@ class TestAIConsumer:
             patch("ai_consumer.dependencies.KafkaHelper"),
             patch("ai_consumer.dependencies.OpenAI"),
             patch("ai_consumer.dependencies.ThreadPoolExecutor"),
+            patch("ai_consumer.dependencies.RAGHelper"),
+            patch("ai_consumer.dependencies.RedisHelper"),
         ):
             consumer = AIConsumer()
             consumer.kafka_helper = MagicMock()
             consumer.openai_client = MagicMock()
             consumer.executor = MagicMock()
+            consumer.rag_helper = MagicMock()
+            consumer.redis_helper = MagicMock()
             return consumer
 
     def test_initialization(self, mock_settings):
@@ -38,6 +49,8 @@ class TestAIConsumer:
             patch("ai_consumer.dependencies.KafkaHelper") as mock_kafka,
             patch("ai_consumer.dependencies.OpenAI") as mock_openai,
             patch("ai_consumer.dependencies.ThreadPoolExecutor") as mock_executor,
+            patch("ai_consumer.dependencies.RAGHelper") as mock_rag,
+            patch("ai_consumer.dependencies.RedisHelper") as mock_redis,
         ):
             consumer = AIConsumer()
 
@@ -66,8 +79,8 @@ class TestAIConsumer:
 
             ai_consumer.process_message(message)
 
-            # Verify OpenAI was called with content
-            ai_consumer.process_with_openai.assert_called_once_with("Hello AI")
+            # Verify OpenAI was called with userid and content
+            ai_consumer.process_with_openai.assert_called_once_with("testuser", "Hello AI")
 
             # Verify Kafka publish was called
             ai_consumer.kafka_helper.publish.assert_called_once()
@@ -129,8 +142,9 @@ class TestAIConsumer:
         mock_response.usage.total_tokens = 30
 
         ai_consumer.openai_client.chat.completions.create.return_value = mock_response
+        ai_consumer.rag_helper.retrieve_relevant_chunks.return_value = []
 
-        result = ai_consumer.process_with_openai("Hello AI")
+        result = ai_consumer.process_with_openai("testuser", "Hello AI")
 
         assert result == "This is the AI response"
 
@@ -151,27 +165,30 @@ class TestAIConsumer:
         ai_consumer.openai_client.chat.completions.create.side_effect = TimeoutError(
             "Request timeout"
         )
+        ai_consumer.rag_helper.retrieve_relevant_chunks.return_value = []
 
         with pytest.raises(TimeoutError):
-            ai_consumer.process_with_openai("Hello")
+            ai_consumer.process_with_openai("testuser", "Hello")
 
     def test_process_with_openai_rate_limit(self, ai_consumer):
         """Test OpenAI API rate limit error"""
         ai_consumer.openai_client.chat.completions.create.side_effect = Exception(
             "rate_limit exceeded"
         )
+        ai_consumer.rag_helper.retrieve_relevant_chunks.return_value = []
 
         with pytest.raises(Exception, match="rate_limit"):
-            ai_consumer.process_with_openai("Hello")
+            ai_consumer.process_with_openai("testuser", "Hello")
 
     def test_process_with_openai_generic_error(self, ai_consumer):
         """Test OpenAI API generic error"""
         ai_consumer.openai_client.chat.completions.create.side_effect = Exception(
             "API error"
         )
+        ai_consumer.rag_helper.retrieve_relevant_chunks.return_value = []
 
         with pytest.raises(Exception, match="API error"):
-            ai_consumer.process_with_openai("Hello")
+            ai_consumer.process_with_openai("testuser", "Hello")
 
     def test_cleanup(self, ai_consumer):
         """Test cleanup method"""
@@ -196,10 +213,14 @@ class TestProcessMessageContent:
             patch("ai_consumer.dependencies.KafkaHelper"),
             patch("ai_consumer.dependencies.OpenAI"),
             patch("ai_consumer.dependencies.ThreadPoolExecutor"),
+            patch("ai_consumer.dependencies.RAGHelper"),
+            patch("ai_consumer.dependencies.RedisHelper"),
         ):
             consumer = AIConsumer()
             consumer.kafka_helper = MagicMock()
             consumer.openai_client = MagicMock()
+            consumer.rag_helper = MagicMock()
+            consumer.redis_helper = MagicMock()
             return consumer
 
     def test_empty_content(self, ai_consumer):
@@ -215,8 +236,8 @@ class TestProcessMessageContent:
 
             ai_consumer.process_message(message)
 
-            # Should still call OpenAI with empty string
-            mock_openai.assert_called_once_with("")
+            # Should still call OpenAI with userid and empty string
+            mock_openai.assert_called_once_with("testuser", "")
 
     def test_long_content(self, ai_consumer):
         """Test processing message with long content"""
@@ -232,8 +253,8 @@ class TestProcessMessageContent:
 
             ai_consumer.process_message(message)
 
-            # Should call OpenAI with full content
-            mock_openai.assert_called_once_with(long_text)
+            # Should call OpenAI with userid and full content
+            mock_openai.assert_called_once_with("testuser", long_text)
 
     def test_special_characters_content(self, ai_consumer):
         """Test processing message with special characters"""
@@ -250,4 +271,4 @@ class TestProcessMessageContent:
             ai_consumer.process_message(message)
 
             # Should handle special characters
-            mock_openai.assert_called_once_with(special_text)
+            mock_openai.assert_called_once_with("testuser", special_text)
