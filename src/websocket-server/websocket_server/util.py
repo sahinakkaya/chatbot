@@ -1,5 +1,6 @@
 import logging
 import secrets
+from uuid import UUID
 
 from fastapi import Depends, Query
 from kafka_helper import KafkaHelper
@@ -13,12 +14,12 @@ redis_helper = RedisHelper(settings)
 kafka_helper = KafkaHelper(settings)
 
 
-def get_valid_user_id(userid: str = Query(...)):
+def get_valid_user_id(userid: UUID = Query(...)):
     return UserId(userid=userid)
 
 
-def get_url_params(token: str = Query(...), userid: str = Query(...)):
-    return UrlParams(token=token, userid=userid)
+def get_url_params(token: str = Query(...), userid: UUID = Query(...)):
+    return UrlParams(token=token, userid=str(userid))
 
 
 async def valid_user_with_token(params: UrlParams = Depends(get_url_params)):

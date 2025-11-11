@@ -63,7 +63,7 @@ async def root():
 
 
 @router.post("/token")
-async def generate_token_for_user(userid: UserId = Depends(get_valid_user_id)):
+async def generate_token_for_user(userid: str = Depends(get_valid_user_id)):
     """Generate authentication token for user"""
     token = await generate_token(userid.userid)
     return {"token": token, "userid": userid.userid, "expires_in": 3600}

@@ -27,7 +27,7 @@ class MessageHandler:
             data = WebSocketUserMessage(**raw_data)
         except ValidationError:
             logger.warning(f"Invalid message format from user {userid}: {raw_data}")
-            raise MessageHandlerError("Invalid message format")
+            raise MessageHandlerError("Please keep your message between 1 and 100 characters.")
 
         # Check rate limit
         is_allowed = await self.check_rate_limit(userid)
