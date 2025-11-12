@@ -76,6 +76,8 @@ class AIConsumer:
 
     async def get_conversation_history(self, userid: str) -> list[dict]:
         """Retrieve conversation history for a user from Redis"""
+        if not settings.keep_history:
+            return []
         try:
             history_key = f"chat_history:{userid}"
             history_json = await self.redis_helper.get(history_key)
@@ -99,6 +101,8 @@ class AIConsumer:
         self, userid: str, user_message: str, ai_response: str
     ):
         """Update conversation history in Redis with new message exchange"""
+        if not settings.keep_history:
+            return
         try:
             history_key = f"chat_history:{userid}"
 
@@ -148,7 +152,7 @@ class AIConsumer:
             processing_time = time.time() - start_time
 
             # Update conversation history after successful response
-            # await self.update_conversation_history(userid, content, ai_response)
+            await self.update_conversation_history(userid, content, ai_response)
 
             response_message = {
                 "type": "response",
@@ -181,8 +185,7 @@ class AIConsumer:
 
         try:
             # Get conversation history for the user
-            # history = await self.get_conversation_history(userid)
-            history = []
+            history = await self.get_conversation_history(userid)
 
             # Retrieve relevant context chunks using RAG
             relevant_chunks = self.rag_helper.retrieve_relevant_chunks(

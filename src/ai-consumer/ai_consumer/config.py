@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # Chat History
     chat_history_max_messages: int = 20  # Maximum number of messages to keep in history, should be even number to keep pairs of user/assistant messages
     chat_history_ttl: int = 3600  # Time to live for chat history in seconds (1 hour)
+    keep_history: bool = True  # Whether to keep conversation history
 
     # RAG (Retrieval-Augmented Generation)
     context_file_path: str = "./resume-data.txt"
