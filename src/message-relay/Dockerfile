@@ -35,21 +35,12 @@ FROM python:3.13-slim-bookworm
 # Python executable must be the same, e.g., using `python:3.11-slim-bookworm`
 # will fail.
 
-# Setup a non-root user
-RUN groupadd --system --gid 999 nonroot \
- && useradd --system --gid 999 --uid 999 --create-home nonroot
-
-# Create log directory and set ownership
-RUN mkdir -p /var/log/nova-prime && chown -R nonroot:nonroot /var/log/nova-prime
 
 # Copy the application from the builder
-COPY --from=builder --chown=nonroot:nonroot /app /app
+COPY --from=builder /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-
-# Use the non-root user to run our application
-USER nonroot
 
 # Use `/app` as the working directory
 WORKDIR /app

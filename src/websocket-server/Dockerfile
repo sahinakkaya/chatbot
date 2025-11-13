@@ -38,21 +38,11 @@ FROM python:3.13-slim-bookworm
 # Install curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
-# Setup a non-root user
-RUN groupadd --system --gid 999 nonroot \
- && useradd --system --gid 999 --uid 999 --create-home nonroot
-
-# Create log directory and set ownership
-RUN mkdir -p /var/log/nova-prime && chown -R nonroot:nonroot /var/log/nova-prime
-
 # Copy the application from the builder
-COPY --from=builder --chown=nonroot:nonroot /app /app
+COPY --from=builder /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-
-# Use the non-root user to run our application
-USER nonroot
 
 # Use `/app` as the working directory
 WORKDIR /app

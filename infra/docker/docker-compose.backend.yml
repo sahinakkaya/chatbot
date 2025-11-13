@@ -12,7 +12,7 @@ services:
       SERVER_ID: "server_1"
       APP_NAME: "ws-server-1"
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
       SERVER_ID: "server_2"
       APP_NAME: "ws-server-2"
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
@@ -81,7 +81,7 @@ services:
     env_file:
       - ../../src/ai-consumer/.env.example
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
@@ -100,7 +100,7 @@ services:
     env_file:
       - ../../src/message-relay/.env.example
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy

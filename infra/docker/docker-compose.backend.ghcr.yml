@@ -1,6 +1,6 @@
 services:
   websocket-server-1:
-    image: ghcr.io/sahinakkaya/nova-prime-websocket-server:main
+    image: ghcr.io/sahinakkaya/chatbot-websocket-server:main
     container_name: ws-server-1
     env_file:
       - ../../src/websocket-server/.env.example
@@ -8,7 +8,7 @@ services:
       SERVER_ID: "server_1"
       APP_NAME: "ws-server-1"
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
@@ -34,7 +34,7 @@ services:
 
   # WebSocket Server Instance 2
   websocket-server-2:
-    image: ghcr.io/sahinakkaya/nova-prime-websocket-server:main
+    image: ghcr.io/sahinakkaya/chatbot-websocket-server:main
     container_name: ws-server-2
     env_file:
       - ../../src/websocket-server/.env.example
@@ -42,7 +42,7 @@ services:
       SERVER_ID: "server_2"
       APP_NAME: "ws-server-2"
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
@@ -68,12 +68,12 @@ services:
 
   # AI Consumer Service
   ai-consumer:
-    image: ghcr.io/sahinakkaya/nova-prime-ai-consumer:main
+    image: ghcr.io/sahinakkaya/chatbot-ai-consumer:main
     container_name: ai-consumer
     env_file:
       - ../../src/ai-consumer/.env.example
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
@@ -85,12 +85,12 @@ services:
 
   # Message Relay Service
   message-relay:
-    image: ghcr.io/sahinakkaya/nova-prime-message-relay:main
+    image: ghcr.io/sahinakkaya/chatbot-message-relay:main
     container_name: message-relay
     env_file:
       - ../../src/message-relay/.env.example
     volumes:
-      - logs:/var/log/nova-prime
+      - logs:/var/log/chatbot
     depends_on:
       kafka:
         condition: service_healthy
