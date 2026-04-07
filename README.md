@@ -1,5 +1,7 @@
 # Real-time AI Conversation System
 
+![](https://uptime.sahinakkaya.dev/api/badge/32/status)
+
 A distributed microservices architecture for real-time AI conversations using WebSocket connections, Kafka message queuing, and Redis pub/sub. This might look overkill for a simple chat bot to be used on a personal site but this project is originally created for a technical challenge.
 
 ## Architecture Overview
