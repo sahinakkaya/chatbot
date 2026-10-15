@@ -17,7 +17,7 @@ env:
   REPO_OWNER: ${{ github.repository_owner }}
 
 jobs:
-  build-and-push-websocket-server:
+  build-and-push-chatbot:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,50 +26,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build and push websocket-server
+      - name: Build and push chatbot
         uses: ./.github/actions/build-push-image
         with:
-          service-name: websocket-server
+          service-name: chatbot
           registry: ${{ env.REGISTRY }}
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.GITHUB_TOKEN }}
-          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/chatbot-websocket-server
-
-  build-and-push-ai-consumer:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      # Don't need the following unless we use heavy libraries
-      # - name: Delete huge unnecessary tools folder
-      #   run: rm -rf /opt/hostedtoolcache
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build and push ai-consumer
-        uses: ./.github/actions/build-push-image
-        with:
-          service-name: ai-consumer
-          registry: ${{ env.REGISTRY }}
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
-          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/chatbot-ai-consumer
-
-  build-and-push-message-relay:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build and push message-relay
-        uses: ./.github/actions/build-push-image
-        with:
-          service-name: message-relay
-          registry: ${{ env.REGISTRY }}
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
-          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/chatbot-message-relay
+          image-name: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/chatbot

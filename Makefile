@@ -5,11 +5,11 @@ DOCKER_DIR = infra/docker
 
 help:
 	@echo "Available commands:"
-	@echo "  make start-dependencies  - Start Kafka, Zookeeper, and Redis"
+	@echo "  make start-dependencies  - Start Redis"
 	@echo "  make stop-dependencies   - Stop dependencies"
 	@echo "  make start-monitoring    - Start Prometheus and Grafana"
 	@echo "  make stop-monitoring     - Stop monitoring services"
-	@echo "  make start-backend       - Start all backend services (WebSocket, AI Consumer, Message Relay, Nginx)"
+	@echo "  make start-backend       - Start the backend service"
 	@echo "  make stop-backend        - Stop backend services"
 	@echo "  make start-all           - Start all services"
 	@echo "  make stop-all            - Stop all services"
@@ -33,8 +33,8 @@ start-backend:
 	docker compose -f $(DOCKER_DIR)/docker-compose.dependencies.yml -f $(DOCKER_DIR)/docker-compose.backend.yml up -d
 
 stop-backend:
-	docker stop ws-server-1 ws-server-2 ai-consumer message-relay nginx 2>/dev/null || true
-	docker rm ws-server-1 ws-server-2 ai-consumer message-relay nginx 2>/dev/null || true
+	docker stop chatbot 2>/dev/null || true
+	docker rm chatbot 2>/dev/null || true
 
 start-all:
 	docker compose -f $(DOCKER_DIR)/docker-compose.dependencies.yml -f $(DOCKER_DIR)/docker-compose.monitoring.yml -f $(DOCKER_DIR)/docker-compose.backend.yml up -d

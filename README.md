@@ -1,85 +1,111 @@
-# Real-time AI Conversation System
+# Real-time AI Chatbot
 
-![](https://uptime.sahinakkaya.dev/api/badge/32/status)
+A WebSocket-based AI chatbot for a personal website. It accepts a user message,
+uses OpenAI to generate a response, and sends that response back over the same
+real-time connection.
 
-A distributed microservices architecture for real-time AI conversations using WebSocket connections, Kafka message queuing, and Redis pub/sub. This might look overkill for a simple chat bot to be used on a personal site but this project is originally created for a technical challenge.
+The service includes token-based WebSocket access, per-user rate limiting,
+optional conversation history, Cloudflare Turnstile support, structured logging,
+and retrieval-augmented responses using the included resume context.
 
-## Architecture Overview
+## Requirements
 
+- Docker and Docker Compose for the recommended setup
+- An OpenAI API key
+
+For local development without Docker, you also need Python 3.13+ and
+[uv](https://docs.astral.sh/uv/).
+
+## Run with Docker
+
+Create a local environment file and set your OpenAI key:
+
+```bash
+cp src/chatbot/.env.example src/chatbot/.env
 ```
-Client → Nginx → WebSocket Server (2 instances) → Kafka (incoming_messages)
-                                       ↑                     ↓
-                                       |               AI Consumer → OpenAI API
-                                       |                                ↓
-                                      Redis ← Message Relay ← Kafka (responses)
-```
 
-## Tech Stack
+Set `OPENAI_API_KEY` in `src/chatbot/.env`, then start the application:
 
-- **Language**: Python 3.13
-- **Web Framework**: FastAPI with WebSocket support
-- **Message Queue**: Apache Kafka with kafka-python
-- **Cache/Pub-Sub**: Redis with redis-py
-- **AI Integration**: OpenAI API (GPT-3.5-turbo)
-- **Package Manager**: uv
-- **Containerization**: Docker & Docker Compose
-- **Load Balancer**: Nginx (least_conn strategy)
-- **Monitoring**: Prometheus + Grafana
-- **Logging**: Structured JSON logging with correlation IDs
-- **CI/CD**: GitHub Actions with reusable Docker build action
-
-## Services
-
-### 1. WebSocket Server (`websocket-server/`)
-- **Handles** WebSocket connections from clients
-- **Uses** token-based authentication
-- **Publishes** user messages to Kafka `incoming_messages` topic
-- **Subscribes** to Redis channels for user-specific responses
-- **Implements** per-user rate limiting
-- **Scales** horizontally (2 instances load-balanced by Nginx)
-
-**Endpoints:**
-- `GET /ws?token=<token>&userid=<userid>` - WebSocket connection
-- `POST /token?userid=<userid>` - Generate authentication token
-- `GET /health` - Health check endpoint
-- `GET /metrics` - Prometheus metrics
-
-### 2. AI Consumer (`ai-consumer/`)
-- **Consumes** messages from `incoming_messages` Kafka topic
-- **Processes** messages with OpenAI API (GPT-3.5-turbo)
-- **Publishes** AI responses to `responses` Kafka topic
-- **Handles** API rate limiting with exponential backoff retry (7 attempts)
-- **Processes** concurrently using ThreadPoolExecutor (50 workers)
-
-### 3. Message Relay (`message-relay/`)
-- **Consumes** messages from `responses` Kafka topic
-- **Publishes** to user-specific Redis channels (`user:{userid}`)
-- **Routes** messages back to WebSocket servers
-- **Ensures** reliable message delivery
-
-## Prerequisites
-
-- Docker and Docker Compose
-
-## Quick Start
-
-### 1. Environment Setup
-You don't need to do anything else if you just want to run with docker. If you want to run locally, copy `.env.example` files to `.env` and change it based on your needs. You will need python3.13+ and [`uv`](https://docs.astral.sh/uv/)
-
-### 2. Start Services
-
-**Option A: Build images locally**
 ```bash
 cd infra/docker
 docker compose up --build -d
 ```
 
-**Option B: Use pre-built images from GitHub Container Registry**
+The chatbot is available at `http://localhost:8080`.
+
+To inspect logs or stop it:
+
 ```bash
-cd infra/docker
-# I made the images public so you don't need to login
-# Start services using pre-built images
-docker compose -f docker-compose.dependencies.yml -f docker-compose.backend.ghcr.yml -f docker-compose.monitoring.yml up -d
+docker compose logs -f chatbot
+docker compose down
 ```
-### 3. Use the App
-The nginx load balancer will be running on `8080` by default. All the requests made are proxied to `websocket-server`. There is an endpoint in `websocket-server` in order to obtain a token. After getting your token, make a websocket connection with your user id and token. If your token matches with your user id, you will be connected through the websocket and you can send messages to be answered by AI. You can visit http://localhost:8080/ in order to quickly test it via simple ui.
+
+## Run locally
+
+Start Redis:
+
+```bash
+docker compose -f infra/docker/docker-compose.dependencies.yml up -d redis
+```
+
+Configure and start the chatbot:
+
+```bash
+cd src/chatbot
+cp .env.example .env
+# Set OPENAI_API_KEY in .env
+set -a; source .env; set +a
+uv sync
+uv run uvicorn chatbot.main:app --reload
+```
+
+The local server listens on `http://localhost:8000`.
+
+## Connect to the chatbot
+
+First request a token. User IDs must be UUIDs.
+
+```bash
+curl -X POST 'http://localhost:8080/token?userid=550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Content-Type: application/json' \
+  -d '{"captcha":"development"}'
+```
+
+When `TURNSTILE_SECRET_KEY` is empty, the `captcha` value is accepted for local
+development. Configure a Turnstile secret in production.
+
+Use the returned token to open a WebSocket connection:
+
+```text
+ws://localhost:8080/ws?userid=550e8400-e29b-41d4-a716-446655440000&token=<token>
+```
+
+Send messages in this format:
+
+```json
+{
+  "type": "message",
+  "content": "Tell me about your experience with Python."
+}
+```
+
+Responses contain the generated text, user ID, timestamp, processing time, and
+correlation ID.
+
+## Configuration
+
+`src/chatbot/.env.example` documents all settings. The most useful ones are:
+
+- `OPENAI_API_KEY`: required OpenAI API key.
+- `OPENAI_MODEL`: chat model to use.
+- `REDIS_HOST` and `REDIS_PORT`: Redis connection details.
+- `USER_RATE_LIMIT_MAX_REQUESTS` and `USER_RATE_LIMIT_WINDOW_SECONDS`: per-user request limit.
+- `KEEP_HISTORY`, `CHAT_HISTORY_MAX_MESSAGES`, and `CHAT_HISTORY_TTL`: conversation-history behavior.
+- `CONTEXT_FILE_PATH`: context file used for retrieval-augmented responses.
+- `TURNSTILE_SECRET_KEY`: enables Cloudflare Turnstile verification.
+
+## Health check
+
+```bash
+curl http://localhost:8080/health
+```

@@ -1,0 +1,29 @@
+[project]
+name = "chatbot"
+version = "0.1.0"
+description = "Single-service chatbot for real-time AI conversations"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.118.0",
+    "httpx>=0.28.1",
+    "logger",
+    "numpy>=2.3.4",
+    "openai>=2.1.0",
+    "pydantic>=2.11.9",
+    "pydantic-settings>=2.11.0",
+    "redis-helper",
+    "tenacity>=9.1.2",
+    "uvicorn[standard]>=0.37.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+]
+
+[tool.uv.sources]
+logger = { path = "../common/logger" }
+redis-helper = { path = "../common/redis-helper" }

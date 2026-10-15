@@ -2,7 +2,7 @@ name: 'Build and Push Docker Image'
 description: 'Build and push a Docker image to GitHub Container Registry'
 inputs:
   service-name:
-    description: 'Name of the service (ai-consumer, message-relay, websocket-server)'
+    description: 'Name of the service directory to build'
     required: true
   registry:
     description: 'Container registry URL'
