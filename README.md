@@ -89,8 +89,9 @@ Send messages in this format:
 }
 ```
 
-Responses contain the generated text, user ID, timestamp, processing time, and
-correlation ID.
+The chatbot streams generated text as `response.delta` events, followed by a
+`response.done` event containing the complete response, user ID, timestamp,
+processing time, and correlation ID.
 
 ## Configuration
 

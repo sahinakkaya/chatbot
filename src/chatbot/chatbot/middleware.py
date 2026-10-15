@@ -22,4 +22,5 @@ async def lifespan(_: FastAPI):
     await asyncio.to_thread(ai_service.initialize)
     yield
     logger.warning(f"Shutting down the application at {time.time()}")
+    await ai_service.teardown()
     await redis_helper.teardown()

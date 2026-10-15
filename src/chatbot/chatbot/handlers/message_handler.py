@@ -18,7 +18,7 @@ class MessageHandler:
     def __init__(self, ai_service: AIService):
         self.ai_service = ai_service
 
-    async def process_message(self, raw_data: dict, userid: str) -> dict:
+    async def start_stream(self, raw_data: dict, userid: str):
         try:
             data = WebSocketUserMessage(**raw_data)
         except ValidationError as error:
@@ -29,7 +29,7 @@ class MessageHandler:
             logger.warning(f"Rate limit exceeded for user {userid}")
             raise MessageHandlerError("Rate limit exceeded. Please slow down.")
 
-        return await self.ai_service.create_response(
+        return self.ai_service.stream_response(
             userid=userid,
             content=data.content,
             correlation_id=correlation_id.get() or "-",

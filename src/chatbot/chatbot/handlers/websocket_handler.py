@@ -24,8 +24,9 @@ class WebSocketHandler:
         while True:
             data = await websocket.receive_json()
             try:
-                response = await self.message_handler.process_message(data, userid)
-                await self.broadcast(userid, response)
+                response_stream = await self.message_handler.start_stream(data, userid)
+                async for response in response_stream:
+                    await self.broadcast(userid, response)
             except MessageHandlerError as error:
                 logger.warning(f"Message handler error for user {userid}: {error}")
                 await websocket.send_json({"message": str(error), "type": "error"})

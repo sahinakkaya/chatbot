@@ -3,8 +3,9 @@ import json
 import logging
 import time
 from datetime import UTC, datetime
+from typing import AsyncIterator
 
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAI
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from chatbot.config import settings
@@ -17,10 +18,14 @@ logger = logging.getLogger(__name__)
 class AIService:
     def __init__(self):
         self.openai_client: OpenAI | None = None
+        self.async_openai_client: AsyncOpenAI | None = None
         self.rag_helper: RAGHelper | None = None
 
     def initialize(self):
         self.openai_client = OpenAI(api_key=settings.openai_api_key, max_retries=0)
+        self.async_openai_client = AsyncOpenAI(
+            api_key=settings.openai_api_key, max_retries=0
+        )
         self.rag_helper = RAGHelper(
             openai_client=self.openai_client,
             embedding_model=settings.rag_embedding_model,
@@ -29,6 +34,10 @@ class AIService:
         )
         self.rag_helper.initialize_from_file(settings.context_file_path)
         logger.info("AI service initialized with retrieval-augmented generation")
+
+    async def teardown(self):
+        if self.async_openai_client is not None:
+            await self.async_openai_client.close()
 
     async def get_conversation_history(self, userid: str) -> list[dict]:
         if not settings.keep_history:
@@ -66,14 +75,25 @@ class AIService:
                 f"Failed to update conversation history for user {userid}: {error}"
             )
 
-    async def create_response(
+    async def stream_response(
         self, userid: str, content: str, correlation_id: str
-    ) -> dict:
+    ) -> AsyncIterator[dict]:
         start_time = time.time()
-        ai_response = await self.process_with_openai(userid, content)
+        response_parts: list[str] = []
+
+        async for delta in self.stream_with_openai(userid, content):
+            response_parts.append(delta)
+            yield {
+                "type": "response.delta",
+                "content": delta,
+                "userid": userid,
+                "correlation_id": correlation_id,
+            }
+
+        ai_response = "".join(response_parts)
         await self.update_conversation_history(userid, content, ai_response)
-        return {
-            "type": "response",
+        yield {
+            "type": "response.done",
             "content": ai_response,
             "userid": userid,
             "timestamp": datetime.now(UTC).isoformat(),
@@ -87,8 +107,23 @@ class AIService:
         wait=wait_exponential(),
         reraise=True,
     )
-    async def process_with_openai(self, userid: str, content: str) -> str:
-        if self.openai_client is None or self.rag_helper is None:
+    async def create_openai_stream(self, messages: list[dict]):
+        if self.async_openai_client is None:
+            raise RuntimeError("AI service is not initialized")
+
+        return await self.async_openai_client.chat.completions.create(
+            model=settings.openai_model,
+            messages=messages,
+            max_tokens=500,
+            temperature=0.7,
+            timeout=2.0,
+            stream=True,
+        )
+
+    async def stream_with_openai(
+        self, userid: str, content: str
+    ) -> AsyncIterator[str]:
+        if self.rag_helper is None:
             raise RuntimeError("AI service is not initialized")
 
         history = await self.get_conversation_history(userid)
@@ -111,12 +146,10 @@ Context:
 
         messages = [{"role": "system", "content": system_content}, *history]
         messages.append({"role": "user", "content": content})
-        response = await asyncio.to_thread(
-            self.openai_client.chat.completions.create,
-            model=settings.openai_model,
-            messages=messages,
-            max_tokens=500,
-            temperature=0.7,
-            timeout=2.0,
-        )
-        return response.choices[0].message.content
+        stream = await self.create_openai_stream(messages)
+        async for chunk in stream:
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
